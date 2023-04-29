@@ -16,7 +16,7 @@ pacman::p_load(tidyverse)
 ## Importing the data
 
 ```{r}
-exam_data <- read_csv("data/Exam_data.csv")
+exam_data <- read_csv("data/Exam_data.csv", show_col_types = FALSE)
 ```
 
 # Plotting a simple bar chart
