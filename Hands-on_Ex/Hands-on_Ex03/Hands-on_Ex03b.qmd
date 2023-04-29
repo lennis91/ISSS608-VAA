@@ -1,6 +1,8 @@
 ---
 title: "Hands-on Exercise 3b"
 author: "Lennis"
+date: "29 April 2023"
+edit: visual
 ---
 
 # Getting Started
@@ -29,6 +31,7 @@ globalPop <- read_xls("data/GlobalPopulation.xls",
 A static bubble plot is drawn below using ggplot2. This may not be that useful.
 
 ```{r}
+#| code-fold: TRUE
 ggplot(globalPop, aes(x = Old, y = Young, 
                       size = Population, 
                       colour = Country)) +
@@ -43,6 +46,7 @@ ggplot(globalPop, aes(x = Old, y = Young,
 transition_time() of gganimate is used to create transition through distinct states. 
 
 ```{r}
+#| code-fold: TRUE
 ggplot(globalPop, aes(x = Old, y = Young, 
                       size = Population, 
                       colour = Country)) +
@@ -62,6 +66,7 @@ ggplot(globalPop, aes(x = Old, y = Young,
 ## With ggplotly
 
 ```{r}
+#| code-fold: TRUE
 gg <- ggplot(globalPop, 
        aes(x = Old, 
            y = Young, 
@@ -82,6 +87,8 @@ ggplotly(gg)
 ## With plotly
 
 ```{r}
+#| code-fold: TRUE
+#| warning: FALSE
 bp <- globalPop %>%
   plot_ly(x = ~Old, 
           y = ~Young, 

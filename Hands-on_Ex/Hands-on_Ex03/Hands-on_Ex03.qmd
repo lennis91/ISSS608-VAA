@@ -1,6 +1,8 @@
 ---
 title: "Hands-on Exercise 3a"
 author: "Lennis"
+date: "29 April 2023"
+edit: visual
 ---
 
 # Getting Started
@@ -27,6 +29,7 @@ ggiraph is a ggplot2 extension that allows ggplot graphics to be interactive. Th
 ## With Tooltip
 
 ```{r}
+#| code-fold: TRUE
 p <- ggplot(data=exam_data, 
        aes(x = MATHS)) +
   geom_dotplot_interactive(
@@ -46,6 +49,7 @@ girafe(
 We can also display multiple information on the tooltip, as seen in the first 3 lines of code.
 
 ```{r}
+#| code-fold: TRUE
 exam_data$tooltip <- c(paste0(     
   "Name = ", exam_data$ID,         
   "\n Class = ", exam_data$CLASS)) 
@@ -69,6 +73,7 @@ girafe(
 The tooltip style can be customised with opts_tooltip(). 
 
 ```{r}
+#| code-fold: TRUE
 tooltip_css <- "background-color:white; #<<
 font-style:bold; color:black;" #<<
 
@@ -94,6 +99,7 @@ girafe(
 We can also display statistics on tooltip.
 
 ```{r}
+#| code-fold: TRUE
 tooltip <- function(y, ymax, accuracy = .01) {
   mean <- scales::number(y, accuracy = accuracy)
   sem <- scales::number(ymax - y, accuracy = accuracy)
@@ -125,6 +131,7 @@ girafe(ggobj = gg_point,
 We can add hover effect with data_id aesthetic. 
 
 ```{r}
+#| code-fold: TRUE
 p <- ggplot(data=exam_data, 
        aes(x = MATHS)) +
   geom_dotplot_interactive(
@@ -144,6 +151,7 @@ girafe(
 Hover effect can be styled with css.
 
 ```{r}
+#| code-fold: TRUE
 p <- ggplot(data=exam_data, 
        aes(x = MATHS)) +
   geom_dotplot_interactive(              
@@ -167,6 +175,7 @@ girafe(
 We can combine tooltip with hover. 
 
 ```{r}
+#| code-fold: TRUE
 p <- ggplot(data=exam_data, 
        aes(x = MATHS)) +
   geom_dotplot_interactive(              
@@ -193,6 +202,7 @@ girafe(
 onclick argument of ggiraph provides hotlink interactivity on the web.
 
 ```{r}
+#| code-fold: TRUE
 exam_data$onclick <- sprintf("window.open(\"%s%s\")",
 "https://www.moe.gov.sg/schoolfinder?journey=Primary%20school",
 as.character(exam_data$ID))
@@ -215,6 +225,7 @@ girafe(
 ## Coordinated Multiple Views with ggiraph
 
 ```{r}
+#| code-fold: TRUE
 p1 <- ggplot(data=exam_data, 
        aes(x = MATHS)) +
   geom_dotplot_interactive(              
@@ -252,6 +263,7 @@ girafe(code = print(p1 + p2),
 We can create a basic interactive plot with plotly.
 
 ```{r}
+#| code-fold: TRUE
 plot_ly(data = exam_data, 
              x = ~MATHS, 
              y = ~ENGLISH)
@@ -260,6 +272,7 @@ plot_ly(data = exam_data,
 We can map the color argument. 
 
 ```{r}
+#| code-fold: TRUE
 plot_ly(data = exam_data, 
         x = ~ENGLISH, 
         y = ~MATHS, 
@@ -269,6 +282,7 @@ plot_ly(data = exam_data,
 We can create a basic interactive plot with ggplotly with one additional line.
 
 ```{r}
+#| code-fold: TRUE
 p <- ggplot(data=exam_data, 
             aes(x = MATHS,
                 y = ENGLISH)) +
@@ -281,6 +295,7 @@ ggplotly(p)
 We can also create coordinated multiple views with plotly.
 
 ```{r}
+#| code-fold: TRUE
 d <- highlight_key(exam_data)
 p1 <- ggplot(data=d, 
             aes(x = MATHS,
@@ -302,10 +317,12 @@ subplot(ggplotly(p1),
 # Interactive Data Visualization with crosstalk Methods
 
 ```{r}
+#| code-fold: TRUE
 DT::datatable(exam_data, class= "compact")
 ```
 
 ```{r}
+#| code-fold: TRUE
 d <- highlight_key(exam_data) 
 p <- ggplot(d, 
             aes(ENGLISH, 

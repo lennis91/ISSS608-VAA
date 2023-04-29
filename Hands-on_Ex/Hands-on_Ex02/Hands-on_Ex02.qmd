@@ -26,6 +26,7 @@ exam_data <- read_csv("data/Exam_data.csv", show_col_types = FALSE)
 Annotation is challenging, especially with large amounts of data. The chart below gives an example of an ineffective annotated chart using ggplot2. 
 
 ```{r}
+#| code-fold: TRUE
 ggplot(data=exam_data, 
        aes(x= MATHS, 
            y=ENGLISH)) +
@@ -43,6 +44,7 @@ ggplot(data=exam_data,
 ggrepel is an extension of the ggplot2 package which provides geoms for ggplot2 to repel overlapping text as in our examples on the right. We simply replace geom_text() by geom_text_repel() and geom_label() by geom_label_repel.
 
 ```{r}
+#| code-fold: TRUE
 ggplot(data=exam_data, 
        aes(x= MATHS, 
            y=ENGLISH)) +
@@ -63,6 +65,7 @@ ggplot(data=exam_data,
 ggplot2 comes with eight built-in themes, they are: theme_gray(), theme_bw(), theme_classic(), theme_dark(), theme_light(), theme_linedraw(), theme_minimal(), and theme_void(). ggthemes provides ‘ggplot2’ themes that replicate the look of plots by well-known websites such as The Economist and The Wall Street Journal. The example below shows one with The Economist theme. 
 
 ```{r}
+#| code-fold: TRUE
 ggplot(data=exam_data, 
              aes(x = MATHS)) +
   geom_histogram(bins=20, 
@@ -78,6 +81,7 @@ ggplot(data=exam_data,
 hrbrthemes package provides a base theme that focuses on typographic elements, including where various labels are placed as well as the fonts that are used.
 
 ```{r}
+#| code-fold: TRUE
 ggplot(data=exam_data, 
              aes(x = MATHS)) +
   geom_histogram(bins=20, 
@@ -95,6 +99,7 @@ ggplot(data=exam_data,
 Let's first create 3 charts. 
 
 ```{r}
+#| code-fold: TRUE
 p1 <- ggplot(data=exam_data, 
              aes(x = MATHS)) +
   geom_histogram(bins=20, 
@@ -106,6 +111,7 @@ p1 <- ggplot(data=exam_data,
 ```
 
 ```{r}
+#| code-fold: TRUE
 p2 <- ggplot(data=exam_data, 
              aes(x = ENGLISH)) +
   geom_histogram(bins=20, 
@@ -117,6 +123,7 @@ p2 <- ggplot(data=exam_data,
 ```
 
 ```{r}
+#| code-fold: TRUE
 p3 <- ggplot(data=exam_data, 
              aes(x= MATHS, 
                  y=ENGLISH)) +

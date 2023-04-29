@@ -22,6 +22,7 @@ exam_data <- read_csv("data/Exam_data.csv", show_col_types = FALSE)
 # Plotting a simple bar chart
 
 ```{r}
+#| code-fold: TRUE
 ggplot(data = exam_data,
        aes(x = RACE)) +
   geom_bar()
