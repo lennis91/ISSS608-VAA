@@ -1,0 +1,189 @@
+---
+title: "In-class Exercise 4"
+author: "Lennis"
+date: "6 May 2023"
+date-modified: "`r Sys.Date()`"
+edit: visual
+execute: 
+  warning: false
+  echo: true
+  eval: true
+---
+
+# Getting Started
+
+## Install and launching R packages
+
+The code chunk below uses p_load() of pacman package to check if rstatix, gt, patchwork and tidyverse packages are installed in the computer. If they are, then they will be launched into R. The **rstatix** package is used instead of the base R package is for ease of convenience and greater visual appeal as the package will wrap the statistical results into a data table rather than a list.
+
+```{r}
+pacman::p_load(rstatix, gt, patchwork, tidyverse)
+```
+
+## Importing the data
+
+```{r}
+exam_data <- read_csv("data/Exam_data.csv")
+```
+
+## Check for Normality
+
+If the data is normally distributed, the points in a Q-Q plot will lie on a straight diagonal line. Conversely, if the line deviates from the diagonal, it is less likely that the data follows a normal distribution.
+
+::: panel-tabset
+## Plot
+
+```{r}
+#| echo: false 
+#| fig-width: 4
+#| fig-height: 4
+ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+```
+
+## Code
+
+```{r}
+#| eval: false
+#| fig-width: 4
+#| fig-height: 4
+ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+```
+:::
+
+::: callout-note
+From the plot above, the data is unlikely to follow a normal distribution.
+:::
+
+## Combining Q-Q Plot with Statistical Result
+
+For a more definitive conclusion, we should also include the statistical test results. Two methods are presented below to combine the statistical results with the plots, one using a workaround by saving a PNG image and another using some HTML codes.
+
+::: panel-tabset
+## Plot
+
+```{r}
+#| echo: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+tmp <- tempfile(fileext = ".png")
+gtsave(sw_t, tmp)
+table_png <- png::readPNG(tmp, native = TRUE)
+
+qq + table_png
+```
+
+## Code
+
+```{r}
+#| eval: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+tmp <- tempfile(fileext = ".png")
+gtsave(sw_t, tmp)
+table_png <- png::readPNG(tmp, native = TRUE)
+
+qq + table_png
+```
+
+## Alt Plot w/o PNG
+
+::: {style="display:flex; flex-direction:row; justify-content:space-evenly; align-items:center;"}
+<div>
+
+```{r}
+#| echo: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+qq
+```
+
+</div>
+
+<div>
+
+```{r}
+#| echo: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+sw_t
+```
+
+</div>
+:::
+
+## Alt Code using HTML
+
+\<div style='display:flex; flex-direction:row; justify-content:space-evenly; align-items:center;'\>
+
+\<div\>
+
+```{r}
+#| eval: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+qq
+```
+
+\</div\>
+
+\<div\>
+
+```{r}
+#| eval: false 
+qq <- ggplot(exam_data,
+       aes(sample=ENGLISH)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+sw_t <- exam_data %>%
+  shapiro_test(ENGLISH) %>%
+  gt()
+
+sw_t
+```
+
+\</div\>
+
+\</div\>
+:::

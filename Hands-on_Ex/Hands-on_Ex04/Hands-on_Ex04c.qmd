@@ -15,7 +15,6 @@ The code chunk below uses p_load() of pacman package to check if FunnelPlotR, pl
 pacman::p_load(tidyverse, FunnelPlotR, plotly, knitr)
 ```
 
-## Importing the data
 
 ```{r}
 covid19 <- read_csv("data/COVID-19_DKI_Jakarta.csv", show_col_types = FALSE) %>%
