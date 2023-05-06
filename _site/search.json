@@ -32,7 +32,7 @@
     "href": "Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.html#hrbrthems",
     "title": "Hands-on Exercise 2",
     "section": "hrbrthems",
-    "text": "hrbrthems\nhrbrthemes package provides a base theme that focuses on typographic elements, including where various labels are placed as well as the fonts that are used.\n\n\nCode\nggplot(data=exam_data, \n             aes(x = MATHS)) +\n  geom_histogram(bins=20, \n                 boundary = 100,\n                 color=\"grey25\", \n                 fill=\"grey90\") +\n  ggtitle(\"Distribution of Maths scores\") +\n  theme_ipsum(axis_title_size = 18,\n              base_size = 15,\n              grid = \"Y\")\n\n\nWarning in grid.Call(C_stringMetric, as.graphicsAnnot(x$label)): font family not\nfound in Windows font database\n\nWarning in grid.Call(C_stringMetric, as.graphicsAnnot(x$label)): font family not\nfound in Windows font database\n\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\n\nWarning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :\nfont family not found in Windows font database\n\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database"
+    "text": "hrbrthems\nhrbrthemes package provides a base theme that focuses on typographic elements, including where various labels are placed as well as the fonts that are used.\n\n\nCode\nggplot(data=exam_data, \n             aes(x = MATHS)) +\n  geom_histogram(bins=20, \n                 boundary = 100,\n                 color=\"grey25\", \n                 fill=\"grey90\") +\n  ggtitle(\"Distribution of Maths scores\") +\n  theme_ipsum(axis_title_size = 18,\n              base_size = 15,\n              grid = \"Y\")\n\n\nWarning in grid.Call(C_stringMetric, as.graphicsAnnot(x$label)): font family\nnot found in Windows font database\n\nWarning in grid.Call(C_stringMetric, as.graphicsAnnot(x$label)): font family\nnot found in Windows font database\n\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database\n\n\nWarning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :\nfont family not found in Windows font database\n\n\nWarning in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y, : font\nfamily not found in Windows font database"
   },
   {
     "objectID": "Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.html",
@@ -46,7 +46,7 @@
     "href": "Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.html#with-tooltip",
     "title": "Hands-on Exercise 3a",
     "section": "With Tooltip",
-    "text": "With Tooltip\n\n\nCode\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(\n    aes(tooltip = ID),\n    stackgroups = TRUE, \n    binwidth = 1, \n    method = \"histodot\") +\n  scale_y_continuous(NULL, \n                     breaks = NULL)\ngirafe(\n  ggobj = p,\n  width_svg = 6,\n  height_svg = 6*0.618\n)\n\n\n\n\n\n\nWe can also display multiple information on the tooltip, as seen in the first 3 lines of code.\n\n\nCode\nexam_data$tooltip <- c(paste0(     \n  \"Name = \", exam_data$ID,         \n  \"\\n Class = \", exam_data$CLASS)) \n\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(\n    aes(tooltip = exam_data$tooltip), \n    stackgroups = TRUE,\n    binwidth = 1,\n    method = \"histodot\") +\n  scale_y_continuous(NULL,               \n                     breaks = NULL)\ngirafe(\n  ggobj = p,\n  width_svg = 8,\n  height_svg = 8*0.618\n)\n\n\n\n\n\n\nThe tooltip style can be customised with opts_tooltip().\n\n\nCode\ntooltip_css <- \"background-color:white; #<<\nfont-style:bold; color:black;\" #<<\n\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(              \n    aes(tooltip = ID),                   \n    stackgroups = TRUE,                  \n    binwidth = 1,                        \n    method = \"histodot\") +               \n  scale_y_continuous(NULL,               \n                     breaks = NULL)\ngirafe(                                  \n  ggobj = p,                             \n  width_svg = 6,                         \n  height_svg = 6*0.618,\n  options = list(    #<<\n    opts_tooltip(    #<<\n      css = tooltip_css)) #<<\n)                                        \n\n\n\n\n\n\nWe can also display statistics on tooltip.\n\n\nCode\ntooltip <- function(y, ymax, accuracy = .01) {\n  mean <- scales::number(y, accuracy = accuracy)\n  sem <- scales::number(ymax - y, accuracy = accuracy)\n  paste(\"Mean maths scores:\", mean, \"+/-\", sem)\n}\n\ngg_point <- ggplot(data=exam_data, \n                   aes(x = RACE),\n) +\n  stat_summary(aes(y = MATHS, \n                   tooltip = after_stat(  \n                     tooltip(y, ymax))),  \n    fun.data = \"mean_se\", \n    geom = GeomInteractiveCol,  \n    fill = \"light blue\"\n  ) +\n  stat_summary(aes(y = MATHS),\n    fun.data = mean_se,\n    geom = \"errorbar\", width = 0.2, size = 0.2\n  )\n\ngirafe(ggobj = gg_point,\n       width_svg = 8,\n       height_svg = 8*0.618)"
+    "text": "With Tooltip\n\n\nCode\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(\n    aes(tooltip = ID),\n    stackgroups = TRUE, \n    binwidth = 1, \n    method = \"histodot\") +\n  scale_y_continuous(NULL, \n                     breaks = NULL)\ngirafe(\n  ggobj = p,\n  width_svg = 6,\n  height_svg = 6*0.618\n)\n\n\n\n\n\n\nWe can also display multiple information on the tooltip, as seen in the first 3 lines of code.\n\n\nCode\nexam_data$tooltip <- c(paste0(     \n  \"Name = \", exam_data$ID,         \n  \"\\n Class = \", exam_data$CLASS)) \n\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(\n    aes(tooltip = exam_data$tooltip), \n    stackgroups = TRUE,\n    binwidth = 1,\n    method = \"histodot\") +\n  scale_y_continuous(NULL,               \n                     breaks = NULL)\ngirafe(\n  ggobj = p,\n  width_svg = 8,\n  height_svg = 8*0.618\n)\n\n\n\n\n\n\nThe tooltip style can be customised with opts_tooltip().\n\n\nCode\ntooltip_css <- \"background-color:white; #<<\nfont-style:bold; color:black;\" #<<\n\np <- ggplot(data=exam_data, \n       aes(x = MATHS)) +\n  geom_dotplot_interactive(              \n    aes(tooltip = ID),                   \n    stackgroups = TRUE,                  \n    binwidth = 1,                        \n    method = \"histodot\") +               \n  scale_y_continuous(NULL,               \n                     breaks = NULL)\ngirafe(                                  \n  ggobj = p,                             \n  width_svg = 6,                         \n  height_svg = 6*0.618,\n  options = list(    #<<\n    opts_tooltip(    #<<\n      css = tooltip_css)) #<<\n)                                        \n\n\n\n\n\n\nWe can also display statistics on tooltip.\n\n\nCode\ntooltip <- function(y, ymax, accuracy = .01) {\n  mean <- scales::number(y, accuracy = accuracy)\n  sem <- scales::number(ymax - y, accuracy = accuracy)\n  paste(\"Mean maths scores:\", mean, \"+/-\", sem)\n}\n\ngg_point <- ggplot(data=exam_data, \n                   aes(x = RACE),\n) +\n  stat_summary(aes(y = MATHS, \n                   tooltip = after_stat(  \n                     tooltip(y, ymax))),  \n    fun.data = \"mean_se\", \n    geom = GeomInteractiveCol,  \n    fill = \"light blue\"\n  ) +\n  stat_summary(aes(y = MATHS),\n    fun.data = mean_se,\n    geom = \"errorbar\", width = 0.2, size = 0.2\n  )\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nCode\ngirafe(ggobj = gg_point,\n       width_svg = 8,\n       height_svg = 8*0.618)"
   },
   {
     "objectID": "Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.html#with-data_id",
@@ -81,7 +81,7 @@
     "href": "Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03b.html#with-ggplotly",
     "title": "Hands-on Exercise 3b",
     "section": "With ggplotly",
-    "text": "With ggplotly\n\n\nCode\ngg <- ggplot(globalPop, \n       aes(x = Old, \n           y = Young, \n           size = Population, \n           colour = Country)) +\n  geom_point(aes(size = Population,\n                 frame = Year),\n             alpha = 0.7, \n             show.legend = FALSE) +\n  scale_colour_manual(values = country_colors) +\n  scale_size(range = c(2, 12)) +\n  labs(x = '% Aged', \n       y = '% Young')\n\n\nWarning: Ignoring unknown aesthetics: frame\n\n\nCode\nggplotly(gg)\n\n\nWarning in p$x$data[firstFrame] <- p$x$frames[[1]]$data: number of items to\nreplace is not a multiple of replacement length"
+    "text": "With ggplotly\n\n\nCode\ngg <- ggplot(globalPop, \n       aes(x = Old, \n           y = Young, \n           size = Population, \n           colour = Country)) +\n  geom_point(aes(size = Population,\n                 frame = Year),\n             alpha = 0.7, \n             show.legend = FALSE) +\n  scale_colour_manual(values = country_colors) +\n  scale_size(range = c(2, 12)) +\n  labs(x = '% Aged', \n       y = '% Young')\n\n\nWarning in geom_point(aes(size = Population, frame = Year), alpha = 0.7, :\nIgnoring unknown aesthetics: frame\n\n\nCode\nggplotly(gg)\n\n\nWarning in p$x$data[firstFrame] <- p$x$frames[[1]]$data: number of items to\nreplace is not a multiple of replacement length"
   },
   {
     "objectID": "Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03b.html#with-plotly",
@@ -89,6 +89,174 @@
     "title": "Hands-on Exercise 3b",
     "section": "With plotly",
     "text": "With plotly\n\n\nCode\nbp <- globalPop %>%\n  plot_ly(x = ~Old, \n          y = ~Young, \n          size = ~Population, \n          color = ~Continent, \n          frame = ~Year, \n          text = ~Country, \n          hoverinfo = \"text\",\n          type = 'scatter',\n          mode = 'markers'\n          )\nbp"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html",
+    "title": "Hands-on Exercise 4a",
+    "section": "",
+    "text": "The code chunk below uses p_load() of pacman package to check if ggstatsplot and tidyverse packages are installed in the computer. If they are, then they will be launched into R.\n\npacman::p_load(ggstatsplot, tidyverse)\n\n\n\n\n\nexam_data <- read_csv(\"data/Exam_data.csv\", show_col_types = FALSE)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#one-sample-test-gghistostats",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#one-sample-test-gghistostats",
+    "title": "Hands-on Exercise 4a",
+    "section": "One-sample Test: gghistostats()",
+    "text": "One-sample Test: gghistostats()\n\n\nCode\nset.seed(1234)\n\ngghistostats(\n  data = exam_data,\n  x = ENGLISH,\n  type = \"bayes\",\n  test.value = 60,\n  xlab = \"English scores\"\n)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#two-sample-mean-test-ggbetweenstats",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#two-sample-mean-test-ggbetweenstats",
+    "title": "Hands-on Exercise 4a",
+    "section": "Two-sample Mean Test: ggbetweenstats()",
+    "text": "Two-sample Mean Test: ggbetweenstats()\n\n\nCode\nggbetweenstats(\n  data = exam_data,\n  x = GENDER, \n  y = MATHS,\n  type = \"np\",\n  messages = FALSE\n)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#oneway-anova-test-ggbetweenstats",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#oneway-anova-test-ggbetweenstats",
+    "title": "Hands-on Exercise 4a",
+    "section": "Oneway ANOVA Test: ggbetweenstats()",
+    "text": "Oneway ANOVA Test: ggbetweenstats()\n\n\nCode\nggbetweenstats(\n  data = exam_data,\n  x = RACE, \n  y = ENGLISH,\n  type = \"p\",\n  mean.ci = TRUE, \n  pairwise.comparisons = TRUE, \n  pairwise.display = \"s\",\n  p.adjust.method = \"fdr\",\n  messages = FALSE\n)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#significant-test-of-correlation-ggscatterstats",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#significant-test-of-correlation-ggscatterstats",
+    "title": "Hands-on Exercise 4a",
+    "section": "Significant Test of Correlation: ggscatterstats()",
+    "text": "Significant Test of Correlation: ggscatterstats()\n\n\nCode\nggscatterstats(\n  data = exam_data,\n  x = MATHS,\n  y = ENGLISH,\n  marginal = FALSE,\n  )"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#significant-test-of-association-depedence-ggbarstats",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#significant-test-of-association-depedence-ggbarstats",
+    "title": "Hands-on Exercise 4a",
+    "section": "Significant Test of Association (Depedence): ggbarstats()",
+    "text": "Significant Test of Association (Depedence): ggbarstats()\nFor this section, the Math scores are binned into 4 classes using cut().\n\nexam1 <- exam_data %>% \n  mutate(MATHS_bins = \n           cut(MATHS, \n               breaks = c(0,60,75,85,100))\n)\n\n\n\nCode\nggbarstats(exam1, \n           x = MATHS_bins, \n           y = GENDER)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#multiple-regression-model-using-lm",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#multiple-regression-model-using-lm",
+    "title": "Hands-on Exercise 4a",
+    "section": "Multiple Regression Model using lm()",
+    "text": "Multiple Regression Model using lm()\n\nmodel <- lm(Price ~ Age_08_04 + Mfg_Year + KM + \n              Weight + Guarantee_Period, data = car_resale)\nmodel\n\n\nCall:\nlm(formula = Price ~ Age_08_04 + Mfg_Year + KM + Weight + Guarantee_Period, \n    data = car_resale)\n\nCoefficients:\n     (Intercept)         Age_08_04          Mfg_Year                KM  \n      -2.637e+06        -1.409e+01         1.315e+03        -2.323e-02  \n          Weight  Guarantee_Period  \n       1.903e+01         2.770e+01"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-collinearity",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-collinearity",
+    "title": "Hands-on Exercise 4a",
+    "section": "Checking for Collinearity",
+    "text": "Checking for Collinearity\n\ncheck_collinearity(model)\n\n# Check for Multicollinearity\n\nLow Correlation\n\n             Term  VIF     VIF 95% CI Increased SE Tolerance Tolerance 95% CI\n               KM 1.46 [ 1.37,  1.57]         1.21      0.68     [0.64, 0.73]\n           Weight 1.41 [ 1.32,  1.51]         1.19      0.71     [0.66, 0.76]\n Guarantee_Period 1.04 [ 1.01,  1.17]         1.02      0.97     [0.86, 0.99]\n\nHigh Correlation\n\n      Term   VIF     VIF 95% CI Increased SE Tolerance Tolerance 95% CI\n Age_08_04 31.07 [28.08, 34.38]         5.57      0.03     [0.03, 0.04]\n  Mfg_Year 31.16 [28.16, 34.48]         5.58      0.03     [0.03, 0.04]\n\n\n\ncheck_c <- check_collinearity(model)\nplot(check_c)\n\nVariable `Component` is not in your data frame :/"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-normality-assumption",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-normality-assumption",
+    "title": "Hands-on Exercise 4a",
+    "section": "Checking for Normality Assumption",
+    "text": "Checking for Normality Assumption\n\nmodel1 <- lm(Price ~ Age_08_04 + KM + \n              Weight + Guarantee_Period, data = car_resale)\n\n\ncheck_n <- check_normality(model1)\n\n\nplot(check_n)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-homogeneity-of-variances",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#checking-for-homogeneity-of-variances",
+    "title": "Hands-on Exercise 4a",
+    "section": "Checking for Homogeneity of Variances",
+    "text": "Checking for Homogeneity of Variances\n\ncheck_h <- check_heteroscedasticity(model1)\n\n\nplot(check_h)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#alternative-complete-check",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#alternative-complete-check",
+    "title": "Hands-on Exercise 4a",
+    "section": "Alternative: Complete Check",
+    "text": "Alternative: Complete Check\n\ncheck_model(model1)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#visualizing-regression-parameters",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04a.html#visualizing-regression-parameters",
+    "title": "Hands-on Exercise 4a",
+    "section": "Visualizing Regression Parameters",
+    "text": "Visualizing Regression Parameters\nMethod 1\n\nplot(parameters(model1))\n\n\n\n\nMethod 2\n\nggcoefstats(model1, \n            output = \"plot\")"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html",
+    "title": "Hands-on Exercise 4b",
+    "section": "",
+    "text": "The code chunk below uses p_load() of pacman package to check if plotly, crosstalk, DT, ggdist, gganimate and tidyverse packages are installed in the computer. If they are, then they will be launched into R.\n\npacman::p_load(tidyverse, plotly, crosstalk, DT, ggdist, gganimate)\n\n\n\n\n\nexam <- read_csv(\"data/Exam_data.csv\", show_col_types = FALSE)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#standard-error",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#standard-error",
+    "title": "Hands-on Exercise 4b",
+    "section": "Standard Error",
+    "text": "Standard Error\n\n\nCode\nggplot(my_sum) +\n  geom_errorbar(\n    aes(x=RACE, \n        ymin=mean-se, \n        ymax=mean+se), \n    width=0.2, \n    colour=\"black\", \n    alpha=0.9, \n    size=0.5) +\n  geom_point(aes\n           (x=RACE, \n            y=mean), \n           stat=\"identity\", \n           color=\"red\",\n           size = 1.5,\n           alpha=1) +\n  ggtitle(\"Standard error of mean \n          maths score by race\")\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#confidence-interval-of-mean",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#confidence-interval-of-mean",
+    "title": "Hands-on Exercise 4b",
+    "section": "Confidence Interval of Mean",
+    "text": "Confidence Interval of Mean\n\n\nCode\nggplot(my_sum) +\n  geom_errorbar(\n    aes(x=reorder(RACE,-mean), \n        ymin=mean-qnorm(1-0.025)*sd/sqrt(n), \n        ymax=mean+qnorm(1-0.025)*sd/sqrt(n)), \n    width=0.2, \n    colour=\"black\", \n    alpha=0.9, \n    size=0.5) +\n  geom_point(aes\n           (x=reorder(RACE,-mean), \n            y=mean), \n           stat=\"identity\", \n           color=\"red\",\n           size = 1.5,\n           alpha=1) +\n  ggtitle(\"95% confidence interval of mean \n          maths score by race\")"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#confidence-interval-of-mean-with-interactive-error-bars",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04b.html#confidence-interval-of-mean-with-interactive-error-bars",
+    "title": "Hands-on Exercise 4b",
+    "section": "Confidence Interval of Mean with Interactive Error Bars",
+    "text": "Confidence Interval of Mean with Interactive Error Bars\n\n\nCode\nmy_sum$tooltip <- c(paste0(\n  \"Race: \", my_sum$RACE,         \n  \"\\n N:  \", my_sum$n,\n  \"\\n Avg. Scores:  \", my_sum$mean,\n  \"\\n 99% CI: [\",my_sum$mean-qnorm(1-0.005)*my_sum$sd/sqrt(my_sum$n), \",\", my_sum$mean-qnorm(1-0.005)*my_sum$sd/sqrt(my_sum$n), \"]\"\n  )) \n\nd <- highlight_key(my_sum) \np <- ggplot(my_sum) +\n  geom_errorbar(\n    aes(x=reorder(RACE,-mean), \n        ymin=mean-qnorm(1-0.005)*sd/sqrt(n), \n        ymax=mean+qnorm(1-0.005)*sd/sqrt(n)), \n    width=0.2, \n    colour=\"black\", \n    alpha=0.9, \n    size=0.5) +\n  geom_point(aes\n           (x=reorder(RACE,-mean), \n            y=mean,\n            text=my_sum$tooltip), \n           stat=\"identity\", \n           color=\"red\",\n           size = 1.5,\n           alpha=1) +\n  ggtitle(\"99% confidence interval of mean \n          maths score by race\")\n\n\nWarning in geom_point(aes(x = reorder(RACE, -mean), y = mean, text =\nmy_sum$tooltip), : Ignoring unknown aesthetics: text\n\n\nCode\ngg <- highlight(ggplotly(p, tooltip=c(\"text\")),\n                \"plotly_selected\")\n\n\nWarning: Use of `my_sum$tooltip` is discouraged.\nℹ Use `tooltip` instead.\n\n\nCode\ncrosstalk::bscols(gg,               \n                  DT::datatable(d), \n                  widths = 5)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html",
+    "title": "Hands-on Exercise 4c",
+    "section": "",
+    "text": "The code chunk below uses p_load() of pacman package to check if FunnelPlotR, plotly, knitr and tidyverse packages are installed in the computer. If they are, then they will be launched into R.\n\npacman::p_load(tidyverse, FunnelPlotR, plotly, knitr)\n\n\n\n\n\ncovid19 <- read_csv(\"data/COVID-19_DKI_Jakarta.csv\", show_col_types = FALSE) %>%\n  mutate_if(is.character, as.factor)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#basic-plot",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#basic-plot",
+    "title": "Hands-on Exercise 4c",
+    "section": "Basic Plot",
+    "text": "Basic Plot\n\nfunnel_plot(\n  numerator = covid19$Positive,\n  denominator = covid19$Death,\n  group = covid19$`Sub-district`\n)\n\n\n\n\nA funnel plot object with 267 points of which 0 are outliers. \nPlot is adjusted for overdispersion."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#makeover-1",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#makeover-1",
+    "title": "Hands-on Exercise 4c",
+    "section": "Makeover 1",
+    "text": "Makeover 1\n\nfunnel_plot(\n  numerator = covid19$Death,\n  denominator = covid19$Positive,\n  group = covid19$`Sub-district`,\n  data_type = \"PR\",     #<<\n  xrange = c(0, 6500),  #<<\n  yrange = c(0, 0.05)   #<<\n)\n\nWarning: The `xrange` argument deprecated; please use the `x_range` argument\ninstead.  For more options, see the help: `?funnel_plot`\n\n\nWarning: The `yrange` argument deprecated; please use the `y_range` argument\ninstead.  For more options, see the help: `?funnel_plot`\n\n\n\n\n\nA funnel plot object with 267 points of which 7 are outliers. \nPlot is adjusted for overdispersion."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#makeover-2",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#makeover-2",
+    "title": "Hands-on Exercise 4c",
+    "section": "Makeover 2",
+    "text": "Makeover 2\n\nfunnel_plot(\n  numerator = covid19$Death,\n  denominator = covid19$Positive,\n  group = covid19$`Sub-district`,\n  data_type = \"PR\",   \n  xrange = c(0, 6500),  \n  yrange = c(0, 0.05),\n  label = NA,\n  title = \"Cumulative COVID-19 Fatality Rate by Cumulative Total Number of COVID-19 Positive Cases\", #<<           \n  x_label = \"Cumulative COVID-19 Positive Cases\", #<<\n  y_label = \"Cumulative Fatality Rate\"  #<<\n)\n\nWarning: The `xrange` argument deprecated; please use the `x_range` argument\ninstead.  For more options, see the help: `?funnel_plot`\n\n\nWarning: The `yrange` argument deprecated; please use the `y_range` argument\ninstead.  For more options, see the help: `?funnel_plot`\n\n\n\n\n\nA funnel plot object with 267 points of which 7 are outliers. \nPlot is adjusted for overdispersion."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#computing-derived-fields",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#computing-derived-fields",
+    "title": "Hands-on Exercise 4c",
+    "section": "Computing Derived Fields",
+    "text": "Computing Derived Fields\n\ndf <- covid19 %>%\n  mutate(rate = Death / Positive) %>%\n  mutate(rate.se = sqrt((rate*(1-rate)) / (Positive))) %>%\n  filter(rate > 0)\n\n\nfit.mean <- weighted.mean(df$rate, 1/df$rate.se^2)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#computing-confidence-intervals",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#computing-confidence-intervals",
+    "title": "Hands-on Exercise 4c",
+    "section": "Computing Confidence Intervals",
+    "text": "Computing Confidence Intervals\n\nnumber.seq <- seq(1, max(df$Positive), 1)\nnumber.ll95 <- fit.mean - 1.96 * sqrt((fit.mean*(1-fit.mean)) / (number.seq)) \nnumber.ul95 <- fit.mean + 1.96 * sqrt((fit.mean*(1-fit.mean)) / (number.seq)) \nnumber.ll999 <- fit.mean - 3.29 * sqrt((fit.mean*(1-fit.mean)) / (number.seq)) \nnumber.ul999 <- fit.mean + 3.29 * sqrt((fit.mean*(1-fit.mean)) / (number.seq)) \ndfCI <- data.frame(number.ll95, number.ul95, number.ll999, \n                   number.ul999, number.seq, fit.mean)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#static-funnel-plot",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#static-funnel-plot",
+    "title": "Hands-on Exercise 4c",
+    "section": "Static Funnel Plot",
+    "text": "Static Funnel Plot\n\np <- ggplot(df, aes(x = Positive, y = rate)) +\n  geom_point(aes(label=`Sub-district`), \n             alpha=0.4) +\n  geom_line(data = dfCI, \n            aes(x = number.seq, \n                y = number.ll95), \n            size = 0.4, \n            colour = \"grey40\", \n            linetype = \"dashed\") +\n  geom_line(data = dfCI, \n            aes(x = number.seq, \n                y = number.ul95), \n            size = 0.4, \n            colour = \"grey40\", \n            linetype = \"dashed\") +\n  geom_line(data = dfCI, \n            aes(x = number.seq, \n                y = number.ll999), \n            size = 0.4, \n            colour = \"grey40\") +\n  geom_line(data = dfCI, \n            aes(x = number.seq, \n                y = number.ul999), \n            size = 0.4, \n            colour = \"grey40\") +\n  geom_hline(data = dfCI, \n             aes(yintercept = fit.mean), \n             size = 0.4, \n             colour = \"grey40\") +\n  coord_cartesian(ylim=c(0,0.05)) +\n  annotate(\"text\", x = 1, y = -0.13, label = \"95%\", size = 3, colour = \"grey40\") + \n  annotate(\"text\", x = 4.5, y = -0.18, label = \"99%\", size = 3, colour = \"grey40\") + \n  ggtitle(\"Cumulative Fatality Rate by Cumulative Number of COVID-19 Cases\") +\n  xlab(\"Cumulative Number of COVID-19 Cases\") + \n  ylab(\"Cumulative Fatality Rate\") +\n  theme_light() +\n  theme(plot.title = element_text(size=12),\n        legend.position = c(0.91,0.85), \n        legend.title = element_text(size=7),\n        legend.text = element_text(size=7),\n        legend.background = element_rect(colour = \"grey60\", linetype = \"dotted\"),\n        legend.key.height = unit(0.3, \"cm\"))\n\nWarning in geom_point(aes(label = `Sub-district`), alpha = 0.4): Ignoring\nunknown aesthetics: label\n\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\np"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#interactive-funnel-plot",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04c.html#interactive-funnel-plot",
+    "title": "Hands-on Exercise 4c",
+    "section": "Interactive Funnel Plot",
+    "text": "Interactive Funnel Plot\n\nfp_ggplotly <- ggplotly(p,\n  tooltip = c(\"label\", \n              \"x\", \n              \"y\"))\nfp_ggplotly"
   },
   {
     "objectID": "index.html",

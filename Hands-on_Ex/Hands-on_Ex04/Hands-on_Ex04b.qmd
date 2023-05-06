@@ -1,0 +1,221 @@
+---
+title: "Hands-on Exercise 4b"
+author: "Lennis"
+date: "5 May 2023"
+edit: visual
+---
+
+# Getting Started
+
+## Install and launching R packages
+
+The code chunk below uses p_load() of pacman package to check if plotly, crosstalk, DT, ggdist, gganimate and tidyverse packages are installed in the computer. If they are, then they will be launched into R.
+
+```{r}
+pacman::p_load(tidyverse, plotly, crosstalk, DT, ggdist, gganimate)
+```
+
+## Importing the data
+
+```{r}
+exam <- read_csv("data/Exam_data.csv", show_col_types = FALSE)
+```
+
+# Visualizing Uncertainty of Point Estimates with ggplot2
+
+The code chunk below performs the followings:
+a) group the observation by RACE,
+b) computes the count of observations, mean, standard deviation and standard error of Maths by RACE, and
+c) save the output as a tibble data table called my_sum.
+
+```{r}
+my_sum <- exam %>%
+  group_by(RACE) %>%
+  summarise(
+    n=n(),
+    mean=mean(MATHS),
+    sd=sd(MATHS)
+    ) %>%
+  mutate(se=sd/sqrt(n-1))
+```
+
+```{r}
+knitr::kable(head(my_sum), format = 'html')
+```
+
+## Standard Error
+
+```{r}
+#| code-fold: TRUE
+ggplot(my_sum) +
+  geom_errorbar(
+    aes(x=RACE, 
+        ymin=mean-se, 
+        ymax=mean+se), 
+    width=0.2, 
+    colour="black", 
+    alpha=0.9, 
+    size=0.5) +
+  geom_point(aes
+           (x=RACE, 
+            y=mean), 
+           stat="identity", 
+           color="red",
+           size = 1.5,
+           alpha=1) +
+  ggtitle("Standard error of mean 
+          maths score by race")
+```
+
+## Confidence Interval of Mean
+
+```{r}
+#| code-fold: TRUE
+ggplot(my_sum) +
+  geom_errorbar(
+    aes(x=reorder(RACE,-mean), 
+        ymin=mean-qnorm(1-0.025)*sd/sqrt(n), 
+        ymax=mean+qnorm(1-0.025)*sd/sqrt(n)), 
+    width=0.2, 
+    colour="black", 
+    alpha=0.9, 
+    size=0.5) +
+  geom_point(aes
+           (x=reorder(RACE,-mean), 
+            y=mean), 
+           stat="identity", 
+           color="red",
+           size = 1.5,
+           alpha=1) +
+  ggtitle("95% confidence interval of mean 
+          maths score by race")
+```
+
+## Confidence Interval of Mean with Interactive Error Bars
+
+```{r}
+#| code-fold: TRUE
+my_sum$tooltip <- c(paste0(
+  "Race: ", my_sum$RACE,         
+  "\n N:  ", my_sum$n,
+  "\n Avg. Scores:  ", my_sum$mean,
+  "\n 99% CI: [",my_sum$mean-qnorm(1-0.005)*my_sum$sd/sqrt(my_sum$n), ",", my_sum$mean-qnorm(1-0.005)*my_sum$sd/sqrt(my_sum$n), "]"
+  )) 
+
+d <- highlight_key(my_sum) 
+p <- ggplot(my_sum) +
+  geom_errorbar(
+    aes(x=reorder(RACE,-mean), 
+        ymin=mean-qnorm(1-0.005)*sd/sqrt(n), 
+        ymax=mean+qnorm(1-0.005)*sd/sqrt(n)), 
+    width=0.2, 
+    colour="black", 
+    alpha=0.9, 
+    size=0.5) +
+  geom_point(aes
+           (x=reorder(RACE,-mean), 
+            y=mean,
+            text=my_sum$tooltip), 
+           stat="identity", 
+           color="red",
+           size = 1.5,
+           alpha=1) +
+  ggtitle("99% confidence interval of mean 
+          maths score by race")
+
+gg <- highlight(ggplotly(p, tooltip=c("text")),
+                "plotly_selected")
+
+crosstalk::bscols(gg,               
+                  DT::datatable(d), 
+                  widths = 5)        
+```
+
+# Visualizing Uncertainty of Point Estimates with ggdist
+
+```{r}
+#| code-fold: TRUE
+exam %>%
+  ggplot(aes(x = RACE, 
+             y = MATHS)) +
+  stat_pointinterval() +   #<<
+  labs(
+    title = "Visualising confidence intervals of mean math score",
+    subtitle = "Mean Point + Multiple-interval plot")
+```
+
+```{r}
+#| code-fold: TRUE
+exam %>%
+  ggplot(aes(x = RACE, y = MATHS)) +
+  stat_pointinterval(.width = 0.95,
+  .point = median,
+  .interval = qi) +
+  labs(
+    title = "Visualising confidence intervals of mean math score",
+    subtitle = "Mean Point + Multiple-interval plot")
+```
+
+```{r}
+#| code-fold: TRUE
+exam %>%
+  ggplot(aes(x = RACE, 
+             y = MATHS)) +
+  stat_pointinterval(
+    show.legend = FALSE) +   
+  labs(
+    title = "Visualising confidence intervals of mean math score",
+    subtitle = "Mean Point + Multiple-interval plot")
+```
+
+```{r}
+#| code-fold: TRUE
+exam %>%
+  ggplot(aes(x = RACE, 
+             y = MATHS)) +
+  stat_gradientinterval(   
+    fill = "skyblue",      
+    show.legend = TRUE     
+  ) +                        
+  labs(
+    title = "Visualising confidence intervals of mean math score",
+    subtitle = "Gradient + interval plot")
+```
+
+# Visualizing Uncertainty with Hypothetical Outcome Plots (HOPs)
+
+```{r}
+library(ungeviz)
+```
+
+```{r}
+#| code-fold: TRUE
+ggplot(data = exam, 
+       (aes(x = factor(RACE), y = MATHS))) +
+  geom_point(position = position_jitter(
+    height = 0.3, width = 0.05), 
+    size = 0.4, color = "#0072B2", alpha = 1/2) +
+  geom_hpline(data = sampler(25, group = RACE), height = 0.6, color = "#D55E00") +
+  theme_bw() + 
+  # `.draw` is a generated column indicating the sample draw
+  transition_states(.draw, 1, 3)
+```
+
+```{r}
+#| code-fold: TRUE
+ggplot(data = exam, 
+       (aes(x = factor(RACE), 
+            y = MATHS))) +
+  geom_point(position = position_jitter(
+    height = 0.3, 
+    width = 0.05), 
+    size = 0.4, 
+    color = "#0072B2", 
+    alpha = 1/2) +
+  geom_hpline(data = sampler(25, 
+                             group = RACE), 
+              height = 0.6, 
+              color = "#D55E00") +
+  theme_bw() + 
+  transition_states(.draw, 1, 3)
+```
