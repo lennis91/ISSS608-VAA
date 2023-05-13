@@ -1,0 +1,334 @@
+---
+title: "Take Home Exercise 1"
+subtitle: "City of Engagement - Financial and Demographic Study"
+author: "Lennis"
+date: "11 May 2023"
+date-modified: "`r Sys.Date()`"
+edit: visual
+execute: 
+  warning: false
+  echo: true
+  eval: true
+---
+
+# 1. Overview
+
+City of Engagement is a small city in the Country of Nowhere with a population of 50,000. It serves as one of the key agricultural service centre in the region, specifically fruit farms and vineyards. The local city council is currently preparing the Local Plan 2023, which outlines the upcoming community revitalization plans. To support decision-making by the council, a representative sample survey was conducted with 1,000 residents to collect key household demographic and expenditure data. By analyzing the survey results, the council aims to better optimize the allocation of the city renewal funds to more needy groups and/or areas of concern.
+
+# 2. Data Preparation
+
+## 2.1 Install and launching R packages
+
+The code chunk below uses p_load() of pacman package to check if the relevant packages are installed in the computer. If they are, then they will be launched into R. The packages are:
+
+-   `plotly`: Used for creating interactive web-based graphs.
+
+-   `ggstatsplot`: Used for creating graphics with details from statistical tests.
+
+-   `knitr`: Used for dynamic report generation
+
+-   `patchwork`: Used to combine plots
+
+-   `ggdist`: Used for visualising distribution and uncertainty
+
+-   `ggthemes`: Provide additional themes for \`ggplot2\`
+
+-   `tidyverse`: A collection of core packages designed for data science, used extensively for data preparation and wrangling.'
+
+-   `lubridate`
+
+-   `zoo`
+
+-   `scales`
+
+```{r}
+pacman::p_load(plotly, ggstatsplot, knitr, patchwork, ggdist, ggthemes, tidyverse, lubridate, zoo, scales)
+```
+
+## 2.2 Importing the Data
+
+The following code chunk uses the `read_csv` function to import the necessary csv files and assign them to the relevant variables.
+
+```{r}
+Financial <- read_csv("data/FinancialJournal.csv")
+Demographic <- read_csv("data/Participants.csv")
+```
+
+```{r}
+Financial
+```
+
+```{r}
+Demographic
+```
+
+## 2.3 Data Wrangling
+
+As the initial step to explore the key statistics of the data, we use the `do.call` function to call the functions `cbind` (combines the output column-wise) and `lapply` to loop the `summary` function over each element in the Financial data. The resulting output is then displayed using `knitr::kable()`, providing a simple overview of the key statistics of each column in the data.
+
+[Initial Overview of Financial Data Set]{.underline}
+
+```{r}
+kable(do.call(cbind, lapply(Financial, summary)))
+```
+
+```{r}
+#| results ='asis'
+kable(data.frame(sapply(Financial, class)))
+kable(data.frame(sapply(Financial, typeof)))
+```
+
+[Initial Overview of Demographic Data Set]{.underline}
+
+```{r}
+kable(do.call(cbind, lapply(Demographic, summary)))
+```
+
+```{r}
+#| results ='asis'
+kable(data.frame(sapply(Demographic, class)))
+kable(data.frame(sapply(Demographic, typeof)))
+```
+
+### 2.3.1 Inaccurate Data Format
+
+From the initial summaries above, we can tell that some of the data has been incorrectly imported into R. The following code chunk is used to convert them to the correct format as shown in the table outputs below.
+
+```{r}
+#| results ='asis'
+Demo_cleaned <- Demographic %>%
+  mutate(
+    participantId = as.factor(participantId), 
+    householdSize = as.integer(householdSize), 
+    # haveKids is ok
+    age = as.integer(age), 
+    educationLevel = as.factor(educationLevel), 
+    educationLevel = factor(educationLevel, levels = c("Low", "HighSchoolOrCollege", "Bachelors", "Graduate"), ordered = TRUE), 
+    interestGroup = as.factor(interestGroup)
+    # Joviality is ok
+  )
+
+kable(data.frame(sapply(Demo_cleaned, class)))
+kable(data.frame(sapply(Demo_cleaned, typeof)))
+```
+
+```{r}
+#| results ='asis'
+Fin_cleaned <- Financial %>%
+  mutate(
+    participantId	= as.factor(participantId),
+    timestamp	= as.POSIXct(timestamp),
+    category	= as.factor(category),
+    # amount is ok
+  )
+
+kable(data.frame(sapply(Fin_cleaned, class)))
+kable(data.frame(sapply(Fin_cleaned, typeof)))
+```
+
+### 2.3.2 Recode 'RentAdjustment' Category In Financial Journal
+
+Rent adjustment is understood as the rebate that is given by the owner to the tenants in view of various reasons. To facilitate the ease of analysis and avoid any areas prone to misunderstanding, we will merge this category with 'Shelter' using the `recode` function.
+
+```{r}
+Fin_cleaned$category <- recode(Fin_cleaned$category, 'RentAdjustment' = 'Shelter')
+```
+
+```{r}
+Fin_cleaned$category[Fin_cleaned$category=='RentAdjustment']
+```
+
+### 2.3.3 Remove Duplicate Data in Financial Journal
+
+1,113 entries were found to be duplicated with matching records in all variables using `duplicated`. It is likely that these transactions were erroneous. Hence, they were removed using `unique`.
+
+```{r}
+nrow(Fin_cleaned[duplicated(Fin_cleaned),])
+```
+
+```{r}
+Fin_cleaned <- unique(Fin_cleaned)
+nrow(Fin_cleaned)
+```
+
+### 2.3.4 Missing Records in Financial Journal
+
+While no missing values were found in both data sets using `is.na`, some participants were found to have significantly lower number of transactions.
+
+```{r}
+#| results = 'asis'
+sum(is.na(Fin_cleaned))
+sum(is.na(Demo_cleaned))
+```
+
+```{r}
+pax_txn_count <- Fin_cleaned %>% count(participantId, sort = TRUE)
+pax_txn_count %>% arrange(n)
+```
+
+Upon further investigation, it was found that these transactions only occurred in March 2022. To facilitate analysis, a new column for the transactions' month-year was created. 131 participants were found to be in this category and their corresponding transactions were removed from the analysis.
+
+::: panel-tabset
+## Plot
+
+```{r}
+#| echo: false
+Fin_cleaned$month_year <- format(as.yearmon(Fin_cleaned$timestamp), "%Y/%m")
+Fin_cleaned_pivot <- Fin_cleaned %>% 
+  group_by(participantId, month_year) %>%
+  summarize(value_sum = sum(amount)) %>%
+  pivot_wider(names_from = month_year, values_from = value_sum)
+
+heatmap_data <- as.matrix(Fin_cleaned_pivot[, -1])
+heatmap(heatmap_data, Colv = NA, Rowv = NA, scale = "column", xlab = "Month-Year", ylab = "participantId", col = gray.colors(10), cexCol = 0.7)
+```
+
+## Code
+
+```{r}
+#| eval: false
+Fin_cleaned$month_year <- format(as.yearmon(Fin_cleaned$timestamp), "%Y/%m")
+Fin_cleaned_pivot <- Fin_cleaned %>% 
+  group_by(participantId, month_year) %>%
+  summarize(value_sum = sum(amount)) %>%
+  pivot_wider(names_from = month_year, values_from = value_sum)
+
+heatmap_data <- as.matrix(Fin_cleaned_pivot[, -1])
+heatmap(heatmap_data, Colv = NA, Rowv = NA, scale = "column", xlab = "Month-Year", ylab = "participantId", col = gray.colors(10), cexCol = 0.7)
+```
+:::
+
+```{r}
+pax_to_remove <- Fin_cleaned_pivot[which(rowSums(is.na(Fin_cleaned_pivot)) > 0),"participantId"]
+pax_to_remove = as.list(as.character(pax_to_remove$participantId))
+Fin_cleaned <- Fin_cleaned[!(Fin_cleaned$participantId %in% pax_to_remove),]
+```
+
+### 2.3.5 Aggregate Statistics for Analysis
+
+The Financial Journal data is segregated by individual transaction entries which are not useful for analysis. Furthermore, the demographic information should also be combined with the financial information.
+
+```{r}
+Fin_cleaned_agg <- Fin_cleaned %>% 
+  group_by(participantId, month_year, category) %>%
+  summarize(value_sum = sum(amount)) %>%
+  pivot_wider(names_from = c(month_year, category), values_from = value_sum)
+Fin_cleaned_agg[is.na(Fin_cleaned_agg)] <- 0
+Fin_cleaned_agg
+```
+
+### 2.3.6 Statistics for Financial Health
+
+To facilitate the analysis of financial health, additional definitions and variables were created relating to the transaction categories, as described below.
+
+1.  Financial Health = Wage + Education + Shelter + Recreation + Food
+
+2.  Expenses = Education + Shelter + Recreation + Food
+
+```{r}
+months <- unique(sub("_.*", "", names(Fin_cleaned_agg)[-1]))
+
+for (month in months) {
+  col_name <- paste0(month, "_FinHealth")
+  Fin_cleaned_agg[col_name] <- rowSums(Fin_cleaned_agg[, grepl(paste0("^", month), names(Fin_cleaned_agg))])
+}
+
+for (month in months) {
+  col_name <- paste0(month, "_Expenses")
+  Fin_cleaned_agg[col_name] <- Fin_cleaned_agg[[paste0(month, "_FinHealth")]] - Fin_cleaned_agg[[paste0(month, "_Wage")]]
+}
+
+Fin_cleaned_agg[, grepl("2023/01", names(Fin_cleaned_agg))]
+```
+
+### 2.3.7 Bin Age and Joviality Data
+
+```{r}
+Demo_cleaned$age_group <- cut(Demo_cleaned$age, breaks = 6)
+Demo_cleaned$joviality_group <- cut(Demo_cleaned$joviality, breaks = 10)
+```
+
+### 2.3.8 Final Analysis Data
+
+```{r}
+all_agg_data <- merge(Fin_cleaned_agg, Demo_cleaned, by = "participantId", all = FALSE)
+```
+
+# 3. Exploratory Data Visualization
+
+## 3.1 Demographic Data Visualization
+
+Income Distribution
+
+```{r}
+all_agg_data$Annual_Income <- rowSums(all_agg_data[, grepl("Wage", names(all_agg_data))])
+
+p1 <- ggplot(data=all_agg_data,
+       aes(x=Annual_Income)) +
+  geom_boxplot() + 
+  ggtitle("Income Distribution") + 
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+p2 <- ggplot(data=all_agg_data,
+       aes(x=Annual_Income)) +
+  geom_histogram(bins = 20)
+
+p1 / p2 + plot_layout(heights = c(0.1,0.9))
+```
+
+```{r}
+ggplot(data=all_agg_data,
+       aes(sample=Annual_Income)) +
+  stat_qq() + 
+  stat_qq_line()
+```
+
+```{r}
+p <- ggplot(data=all_agg_data,
+       aes(y=Annual_Income,
+           x=age_group)) +
+  geom_boxplot() + 
+  ggtitle("Income Distribution by Age Groups")
+
+ggplotly(p)
+```
+
+```{r}
+FinHealth <- all_agg_data[, grepl("FinHealth", names(all_agg_data))]
+FinHealth_combined <- FinHealth %>%
+  gather(key = "Month_Year", value = "FinHealth")
+
+p <- ggplot(data=FinHealth_combined,
+       aes(y=FinHealth,
+           x=Month_Year)) +
+  geom_boxplot() + 
+  coord_flip() +
+  ggtitle("Financial Health over time")
+
+ggplotly(p)
+```
+
+remelt table with participants/month in rows and category in column
+
+Objective: different demographic groups vs financials
+
+demo: joviality bins (5 bins), age bins (6 bins), education (4 levels), interest group (10 levels)
+
+fin: income, expenses, finhealth
+
+explore:
+
+box violin plots age_bin / income or finhealth or expenses (interactive annual)
+
+raincloud plot age_bin / income or finhealth or expenses (animated over month)
+
+confirm:
+
+???
+
+uncertainty in median estimates of fin indicators by demo
