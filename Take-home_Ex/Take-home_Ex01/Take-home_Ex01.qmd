@@ -13,7 +13,7 @@ execute:
 
 # 1. Overview
 
-City of Engagement is a small city in the Country of Nowhere with a population of 50,000. It serves as one of the key agricultural service centre in the region, specifically fruit farms and vineyards. The local city council is currently preparing the Local Plan 2023, which outlines the upcoming community revitalization plans. To support decision-making by the council, a representative sample survey was conducted with 1,000 residents to collect key household demographic and expenditure data. By analyzing the survey results, the council aims to better optimize the allocation of the city renewal funds to more needy groups and/or areas of concern.
+City of Engagement is a small city in the Country of Nowhere with a population of 50,000. It serves as one of the key agricultural service centre in the region, specifically fruit farms and vineyards. The local city council is currently preparing the Local Plan 2023, which outlines the upcoming community revitalization plans. To support decision-making by the council, a representative sample survey was conducted with 1,000 residents to collect key household demographic and expenditure data, spanning 1 year from Mar 2022 to Feb 2023. By analyzing the survey results, the council aims to better optimize the allocation of the city renewal funds to more needy groups and/or areas of concern.
 
 # 2. Data Preparation
 
@@ -35,67 +35,95 @@ The code chunk below uses p_load() of pacman package to check if the relevant pa
 
 -   `tidyverse`: A collection of core packages designed for data science, used extensively for data preparation and wrangling.'
 
--   `lubridate`
+-   `lubridate`: Used for converting dates and timestamps
 
--   `zoo`
+-   `zoo`: Used to work with time series data
 
--   `scales`
+-   `ggridges`: Used to create ridgeline plots
+
+-   `gganimate`: Used to create animated visualizations
+
+-   `nortest`: Used for normality checks
+
+-   `gt`: Used for creating customized tables
 
 ```{r}
-pacman::p_load(plotly, ggstatsplot, knitr, patchwork, ggdist, ggthemes, tidyverse, lubridate, zoo, scales)
+pacman::p_load(plotly, ggstatsplot, knitr, patchwork, ggdist, 
+               ggthemes, tidyverse, lubridate, zoo, scales, 
+               ggridges, ggplot2, gganimate, nortest, gt, rstatix)
 ```
 
 ## 2.2 Importing the Data
 
-The following code chunk uses the `read_csv` function to import the necessary csv files and assign them to the relevant variables.
+The following code chunk uses `read_csv` to import the necessary csv files and assign them to the relevant variables. An overview of the initial tables and columns is provided below.
+
+::: panel-tabset
+## Code
 
 ```{r}
 Financial <- read_csv("data/FinancialJournal.csv")
 Demographic <- read_csv("data/Participants.csv")
 ```
 
-```{r}
-Financial
-```
+## Financial Data
 
 ```{r}
-Demographic
+#| code-fold: TRUE
+kable(data.frame(head(Financial)))
 ```
+
+## Demographic Data
+
+```{r}
+#| code-fold: TRUE
+kable(data.frame(head(Demographic)))
+```
+:::
 
 ## 2.3 Data Wrangling
 
-As the initial step to explore the key statistics of the data, we use the `do.call` function to call the functions `cbind` (combines the output column-wise) and `lapply` to loop the `summary` function over each element in the Financial data. The resulting output is then displayed using `knitr::kable()`, providing a simple overview of the key statistics of each column in the data.
+As the initial step to explore the key statistics of the data, `do.call` was used to call the functions `cbind` (combines the output column-wise) and `lapply` to loop the `summary` function over each element in the Financial data. The resulting output is then displayed using `knitr::kable()`, providing a simple overview of the key statistics of each column in the data.
 
 [Initial Overview of Financial Data Set]{.underline}
 
 ```{r}
+#| code-fold: TRUE
 kable(do.call(cbind, lapply(Financial, summary)))
 ```
 
 ```{r}
-#| results ='asis'
+#| code-fold: TRUE
 kable(data.frame(sapply(Financial, class)))
+```
+
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Financial, typeof)))
 ```
 
 [Initial Overview of Demographic Data Set]{.underline}
 
 ```{r}
+#| code-fold: TRUE
 kable(do.call(cbind, lapply(Demographic, summary)))
 ```
 
 ```{r}
-#| results ='asis'
+#| code-fold: TRUE
 kable(data.frame(sapply(Demographic, class)))
+```
+
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Demographic, typeof)))
 ```
 
 ### 2.3.1 Inaccurate Data Format
 
-From the initial summaries above, we can tell that some of the data has been incorrectly imported into R. The following code chunk is used to convert them to the correct format as shown in the table outputs below.
+From the initial summaries above, it was found that some of the data has been incorrectly imported into R. They were converted to the correct format as shown in the table outputs below.
 
 ```{r}
-#| results ='asis'
+#| code-fold: TRUE
 Demo_cleaned <- Demographic %>%
   mutate(
     participantId = as.factor(participantId), 
@@ -107,13 +135,19 @@ Demo_cleaned <- Demographic %>%
     interestGroup = as.factor(interestGroup)
     # Joviality is ok
   )
+```
 
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Demo_cleaned, class)))
+```
+
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Demo_cleaned, typeof)))
 ```
 
 ```{r}
-#| results ='asis'
 Fin_cleaned <- Financial %>%
   mutate(
     participantId	= as.factor(participantId),
@@ -121,26 +155,29 @@ Fin_cleaned <- Financial %>%
     category	= as.factor(category),
     # amount is ok
   )
+```
 
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Fin_cleaned, class)))
+```
+
+```{r}
+#| code-fold: TRUE
 kable(data.frame(sapply(Fin_cleaned, typeof)))
 ```
 
 ### 2.3.2 Recode 'RentAdjustment' Category In Financial Journal
 
-Rent adjustment is understood as the rebate that is given by the owner to the tenants in view of various reasons. To facilitate the ease of analysis and avoid any areas prone to misunderstanding, we will merge this category with 'Shelter' using the `recode` function.
+Rent adjustment is understood as the rebate that is given by the owner to the tenants in view of various reasons. To facilitate the ease of analysis and avoid any areas prone to misunderstanding, this category was merged with 'Shelter' using the `recode` function.
 
 ```{r}
 Fin_cleaned$category <- recode(Fin_cleaned$category, 'RentAdjustment' = 'Shelter')
 ```
 
-```{r}
-Fin_cleaned$category[Fin_cleaned$category=='RentAdjustment']
-```
-
 ### 2.3.3 Remove Duplicate Data in Financial Journal
 
-1,113 entries were found to be duplicated with matching records in all variables using `duplicated`. It is likely that these transactions were erroneous. Hence, they were removed using `unique`.
+1,113 entries were found to be duplicated with matching records in all variables using `duplicated`. It is likely that these transactions were erroneous. Hence, they were removed using `unique`, leaving 1,512,523 records.
 
 ```{r}
 nrow(Fin_cleaned[duplicated(Fin_cleaned),])
@@ -156,24 +193,22 @@ nrow(Fin_cleaned)
 While no missing values were found in both data sets using `is.na`, some participants were found to have significantly lower number of transactions.
 
 ```{r}
-#| results = 'asis'
+#| code-fold: TRUE
+#| eval: FALSE
 sum(is.na(Fin_cleaned))
 sum(is.na(Demo_cleaned))
-```
-
-```{r}
 pax_txn_count <- Fin_cleaned %>% count(participantId, sort = TRUE)
 pax_txn_count %>% arrange(n)
 ```
 
-Upon further investigation, it was found that these transactions only occurred in March 2022. To facilitate analysis, a new column for the transactions' month-year was created. 131 participants were found to be in this category and their corresponding transactions were removed from the analysis.
+Upon further investigation, it was found that these transactions only occurred in March 2022 as seen from the white areas in the transaction heat map below. To facilitate analysis, a new column for the transactions' month-year was created. 131 participants were found to be in this category and their corresponding transactions were removed from the analysis.
 
 ::: panel-tabset
 ## Plot
 
 ```{r}
 #| echo: false
-Fin_cleaned$month_year <- format(as.yearmon(Fin_cleaned$timestamp), "%Y/%m")
+Fin_cleaned$month_year <- as.yearmon(as.Date(Fin_cleaned$timestamp))
 Fin_cleaned_pivot <- Fin_cleaned %>% 
   group_by(participantId, month_year) %>%
   summarize(value_sum = sum(amount)) %>%
@@ -187,7 +222,7 @@ heatmap(heatmap_data, Colv = NA, Rowv = NA, scale = "column", xlab = "Month-Year
 
 ```{r}
 #| eval: false
-Fin_cleaned$month_year <- format(as.yearmon(Fin_cleaned$timestamp), "%Y/%m")
+Fin_cleaned$month_year <- as.yearmon(as.Date(Fin_cleaned$timestamp))
 Fin_cleaned_pivot <- Fin_cleaned %>% 
   group_by(participantId, month_year) %>%
   summarize(value_sum = sum(amount)) %>%
@@ -199,6 +234,7 @@ heatmap(heatmap_data, Colv = NA, Rowv = NA, scale = "column", xlab = "Month-Year
 :::
 
 ```{r}
+#| code-fold: TRUE
 pax_to_remove <- Fin_cleaned_pivot[which(rowSums(is.na(Fin_cleaned_pivot)) > 0),"participantId"]
 pax_to_remove = as.list(as.character(pax_to_remove$participantId))
 Fin_cleaned <- Fin_cleaned[!(Fin_cleaned$participantId %in% pax_to_remove),]
@@ -206,15 +242,15 @@ Fin_cleaned <- Fin_cleaned[!(Fin_cleaned$participantId %in% pax_to_remove),]
 
 ### 2.3.5 Aggregate Statistics for Analysis
 
-The Financial Journal data is segregated by individual transaction entries which are not useful for analysis. Furthermore, the demographic information should also be combined with the financial information.
+The Financial Journal data is segregated by individual transaction entries which are not useful for analysis. A new data table was created to aggregate the transaction amounts based on the month-year and categories.
 
 ```{r}
+#| code-fold: TRUE
 Fin_cleaned_agg <- Fin_cleaned %>% 
   group_by(participantId, month_year, category) %>%
   summarize(value_sum = sum(amount)) %>%
-  pivot_wider(names_from = c(month_year, category), values_from = value_sum)
+  pivot_wider(names_from = c(category), values_from = value_sum)
 Fin_cleaned_agg[is.na(Fin_cleaned_agg)] <- 0
-Fin_cleaned_agg
 ```
 
 ### 2.3.6 Statistics for Financial Health
@@ -226,47 +262,57 @@ To facilitate the analysis of financial health, additional definitions and varia
 2.  Expenses = Education + Shelter + Recreation + Food
 
 ```{r}
-months <- unique(sub("_.*", "", names(Fin_cleaned_agg)[-1]))
-
-for (month in months) {
-  col_name <- paste0(month, "_FinHealth")
-  Fin_cleaned_agg[col_name] <- rowSums(Fin_cleaned_agg[, grepl(paste0("^", month), names(Fin_cleaned_agg))])
-}
-
-for (month in months) {
-  col_name <- paste0(month, "_Expenses")
-  Fin_cleaned_agg[col_name] <- Fin_cleaned_agg[[paste0(month, "_FinHealth")]] - Fin_cleaned_agg[[paste0(month, "_Wage")]]
-}
-
-Fin_cleaned_agg[, grepl("2023/01", names(Fin_cleaned_agg))]
+#| code-fold: TRUE
+Fin_cleaned_agg$Financial_Health <- rowSums(Fin_cleaned_agg[, c("Wage", "Education", "Shelter", "Recreation", "Food")])
+Fin_cleaned_agg$Expenses <- rowSums(Fin_cleaned_agg[, c("Education", "Shelter", "Recreation", "Food")])
 ```
 
 ### 2.3.7 Bin Age and Joviality Data
 
+To facilitate analysis, the age and joviality data which are continuous were also binned.
+
 ```{r}
+#| code-fold: TRUE
 Demo_cleaned$age_group <- cut(Demo_cleaned$age, breaks = 6)
 Demo_cleaned$joviality_group <- cut(Demo_cleaned$joviality, breaks = 10)
 ```
 
 ### 2.3.8 Final Analysis Data
 
+The final cleaned financial and demographic data were merged to form an aggregated table as shown below.
+
 ```{r}
+#| code-fold: TRUE
 all_agg_data <- merge(Fin_cleaned_agg, Demo_cleaned, by = "participantId", all = FALSE)
+kable(data.frame(head(all_agg_data)))
 ```
 
 # 3. Exploratory Data Visualization
 
-## 3.1 Demographic Data Visualization
+## 3.1 Visualization of Annual Financial Data
 
-Income Distribution
+The monthly aggregated financial data by participants was further consolidated to obtain the overall annual values. From the plots of annual wages, expenses and financial health, the wages and financial health data does not appear to be normal but there is no evidence to suggest that the expenses data deviates from a normal distribution. While financial health is derived from both wages and expenses, there may be a possibility that financial health is more strongly affected and correlated to wage than expenses, given the similar distribution shape between wages and financial health.
+
+::: panel-tabset
+## Wage
 
 ```{r}
-all_agg_data$Annual_Income <- rowSums(all_agg_data[, grepl("Wage", names(all_agg_data))])
+#| code-fold: TRUE
+annual_data <- all_agg_data %>% 
+  group_by(participantId) %>%
+  summarize(Education = sum(Education),
+            Food = sum(Food),
+            Recreation = sum(Recreation),
+            Shelter = sum(Shelter),
+            Wage = sum(Wage),
+            Financial_Health = sum(Financial_Health),
+            Expenses = sum(Expenses))
+annual_data <- merge(annual_data, Demo_cleaned, by = "participantId", all = FALSE)
 
-p1 <- ggplot(data=all_agg_data,
-       aes(x=Annual_Income)) +
+p1 <- ggplot(data=annual_data,
+       aes(x=Wage)) +
   geom_boxplot() + 
-  ggtitle("Income Distribution") + 
+  ggtitle("Annual Wage Distribution") + 
   theme(
     axis.title = element_blank(),
     axis.text = element_blank(),
@@ -274,61 +320,748 @@ p1 <- ggplot(data=all_agg_data,
     panel.grid = element_blank()
   )
 
-p2 <- ggplot(data=all_agg_data,
-       aes(x=Annual_Income)) +
+p2 <- ggplot(data=annual_data,
+       aes(x=Wage)) +
   geom_histogram(bins = 20)
 
 p1 / p2 + plot_layout(heights = c(0.1,0.9))
 ```
 
+## Expense
+
+From the Shapiro-Wilk test results, there is no evidence to suggest that the expenses distribution deviates from a normal distribution.
+
 ```{r}
-ggplot(data=all_agg_data,
-       aes(sample=Annual_Income)) +
+#| code-fold: TRUE
+p1 <- ggplot(data=annual_data,
+       aes(x=Expenses)) +
+  geom_boxplot() + 
+  ggtitle("Annual Expenses Distribution") + 
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+p2 <- ggplot(data=annual_data,
+       aes(x=Expenses)) +
+  geom_histogram(bins = 20)
+
+p1 / p2 + plot_layout(heights = c(0.1,0.9))
+
+```
+
+```{r}
+#| code-fold: TRUE
+qq <- ggplot(annual_data,
+       aes(sample=Expenses)) + 
   stat_qq() + 
   stat_qq_line()
+
+sw_t <- annual_data %>%
+  shapiro_test(Expenses) %>%
+  gt()
+
+tmp <- tempfile(fileext = ".png")
+gtsave(sw_t, tmp)
+table_png <- png::readPNG(tmp, native = TRUE)
+
+qq + table_png
 ```
+
+## Financial Health
 
 ```{r}
-p <- ggplot(data=all_agg_data,
-       aes(y=Annual_Income,
-           x=age_group)) +
+#| code-fold: TRUE
+p1 <- ggplot(data=annual_data,
+       aes(x=Financial_Health)) +
   geom_boxplot() + 
-  ggtitle("Income Distribution by Age Groups")
+  ggtitle("Annual Financial Health Distribution") + 
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
 
-ggplotly(p)
+p2 <- ggplot(data=annual_data,
+       aes(x=Financial_Health)) +
+  geom_histogram(bins = 20)
+
+p1 / p2 + plot_layout(heights = c(0.1,0.9))
 ```
+:::
+
+## 3.2 Visualization of Annual Financial Data by Demographic Groups
+
+We can further explore the annual financial data distributions of each demographic group to discover any patterns for further investigation. This is done through the interactive violin box plot below, which allows the variables of both the x and y axes to be amended. By exploring with the chart below, the following observations were made with each demographic groups:
+
+1.  Age: There did not seem to be differences in financial health between age groups.
+
+2.  Joviality: The financial health of more jovial groups seems to be lower than that of less jovial ones.
+
+3.  Education Level: The more highly-educated groups seemed to be in a better financial health.
+
+4.  Interest Groups: There did not seem to be differences in financial health between interests groups.
+
+Due to time constraints, this report will only focus on the groups with differences for subsequent sections, i.e. joviality and education level. Following similar visualization methods, further work can be done for other groups in the future.
 
 ```{r}
-FinHealth <- all_agg_data[, grepl("FinHealth", names(all_agg_data))]
-FinHealth_combined <- FinHealth %>%
-  gather(key = "Month_Year", value = "FinHealth")
-
-p <- ggplot(data=FinHealth_combined,
-       aes(y=FinHealth,
-           x=Month_Year)) +
-  geom_boxplot() + 
-  coord_flip() +
-  ggtitle("Financial Health over time")
-
-ggplotly(p)
+#| code-fold: TRUE
+#Initiating the base plot
+plot_ly(data = annual_data,
+        x = ~age_group,
+        y = ~Financial_Health,
+        line = list(width =1),
+        type = "violin",
+        marker = list(opacity = 0.5,
+          line = list(width = 2)),
+        box = list(visible = T),
+        meanline = list(visible = T,
+                        color = "red")) |> 
+  
+#Generating plot  
+  layout(title = "",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""),
+         
+#creating dropwdown menus to allow selection of parameters on x-axis and y-axis
+         updatemenus = list(
+           
+           # x-axis menu
+           
+           list(type = 'dropdown',
+                direction = "up",
+                xref = "paper",
+                yref = "paper",
+                xanchor = "left",
+                x = 1, 
+                y = 0,
+                buttons = list(
+                  list(method = "update",
+                       args = list(list(x = list(annual_data$age_group)),
+                                   list(xaxis = list(categoryorder = "category ascending"))),
+                       label = "Age Group"),
+                  list(method = "update",
+                       args = list(list(x = list(annual_data$joviality_group)),
+                                   list(xaxis = list(categoryorder = "category ascending"))),
+                       label = "Joviality Group"),
+                  list(method = "update",
+                       args = list(list(x = list(annual_data$educationLevel)),
+                                   list(xaxis = list(categoryarray = list("Low", "HighSchoolOrCollege", "Bachelors", "Graduate")))),
+                       label = "Education Level"),
+                  list(method = "update",
+                       args = list(list(x = list(annual_data$interestGroup)),
+                                   list(xaxis = list(categoryorder = "category ascending"))),
+                       label = "Interest Group")
+                  )
+                ),
+           # y-axis menu
+           
+           list(type = 'dropdown', 
+                xref = "paper",
+                yref = "paper",
+                xanchor = "right",
+                x = 0, 
+                y = 1,
+                buttons = list(
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Financial_Health)),
+                                   list(yaxis = list(title = "Financial_Health"))),
+                       label = "Financial_Health"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Wage)),
+                                   list(yaxis = list(title = "Wage"))),
+                       label = "Wage"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Expenses)),
+                                   list(yaxis = list(title = "Expenses"))),
+                       label = "Expenses"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Education)),
+                                   list(yaxis = list(title = "Education"))),
+                       label = "Education"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Food)),
+                                   list(yaxis = list(title = "Food"))),
+                       label = "Food"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Recreation)),
+                                   list(yaxis = list(title = "Recreation"))),
+                       label = "Recreation"),
+                  list(method = "update",
+                       args = list(list(y = list(annual_data$Shelter)),
+                                   list(yaxis = list(title = "Shelter"))),
+                       label = "Shelter")
+                  )
+                )
+           )           
+         )
 ```
 
-remelt table with participants/month in rows and category in column
+## 3.3 Visualization of Monthly Financial Data
 
-Objective: different demographic groups vs financials
+Other than demographic groups, the distributions of financial data by individual months were also explored. From the plots below, the population sample seems to financially healthier in March 2022 but decreased and remained relatively consistent thereafter.
 
-demo: joviality bins (5 bins), age bins (6 bins), education (4 levels), interest group (10 levels)
+```{r}
+#| code-fold: TRUE
+#Initiating the base plot
+plot_ly(data = all_agg_data,
+        x = ~month_year,
+        y = ~Financial_Health,
+        line = list(width =1),
+        type = "violin",
+        marker = list(opacity = 0.5,
+          line = list(width = 2)),
+        box = list(visible = T),
+        meanline = list(visible = T,
+                        color = "red")) |> 
+  
+#Generating plot  
+  layout(title = "",
+         #xaxis = list(title = ""),
+         xaxis = list(
+           tickvals = unique(all_agg_data$month_year),
+           ticktext = as.character(unique(all_agg_data$month_year))
+           ),
+         yaxis = list(title = ""),
+         
+#creating dropwdown menus to allow selection of parameters on x-axis and y-axis
+         updatemenus = list(
+           
+           # y-axis menu
+           
+           list(type = 'dropdown', 
+                xref = "paper",
+                yref = "paper",
+                xanchor = "right",
+                x = 0, 
+                y = 1,
+                buttons = list(
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Financial_Health)),
+                                   list(yaxis = list(title = "Financial_Health"))),
+                       label = "Financial_Health"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Wage)),
+                                   list(yaxis = list(title = "Wage"))),
+                       label = "Wage"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Expenses)),
+                                   list(yaxis = list(title = "Expenses"))),
+                       label = "Expenses"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Education)),
+                                   list(yaxis = list(title = "Education"))),
+                       label = "Education"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Food)),
+                                   list(yaxis = list(title = "Food"))),
+                       label = "Food"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Recreation)),
+                                   list(yaxis = list(title = "Recreation"))),
+                       label = "Recreation"),
+                  list(method = "update",
+                       args = list(list(y = list(all_agg_data$Shelter)),
+                                   list(yaxis = list(title = "Shelter"))),
+                       label = "Shelter")
+                  )
+                )
+           )           
+         )
+```
 
-fin: income, expenses, finhealth
+### 3.3.1 Monthly Trends by Demographic Groups
 
-explore:
+Building on the previous observation that March 2022 seemed to be a unique month, the monthly data for each demographic group were further explored to detect if there was any patterns specific to any group through the animated ridge line plots.
 
-box violin plots age_bin / income or finhealth or expenses (interactive annual)
+#### Age Group
 
-raincloud plot age_bin / income or finhealth or expenses (animated over month)
+::: panel-tabset
+## Financial Health
 
-confirm:
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Financial_Health, 
+           y = age_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Financial_Health', 
+       y = 'age_group') +
+  ease_aes("linear")
+```
 
-???
+## Wage
 
-uncertainty in median estimates of fin indicators by demo
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Wage, 
+           y = age_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Wage', 
+       y = 'age_group') +
+  ease_aes("linear")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Expenses, 
+           y = age_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Expenses', 
+       y = 'age_group') +
+  ease_aes("linear")
+```
+:::
+
+#### Joviality Group
+
+::: panel-tabset
+## Financial Health
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Financial_Health, 
+           y = joviality_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Financial_Health', 
+       y = 'joviality_group') +
+  ease_aes("linear")
+```
+
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Wage, 
+           y = joviality_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Wage', 
+       y = 'joviality_group') +
+  ease_aes("linear")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Expenses, 
+           y = joviality_group)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Expenses', 
+       y = 'joviality_group') +
+  ease_aes("linear")
+```
+:::
+
+#### Education Level
+
+::: panel-tabset
+## Financial Health
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Financial_Health, 
+           y = educationLevel)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Financial_Health', 
+       y = 'educationLevel') +
+  ease_aes("linear")
+```
+
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Wage, 
+           y = educationLevel)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Wage', 
+       y = 'educationLevel') +
+  ease_aes("linear")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Expenses, 
+           y = educationLevel)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Expenses', 
+       y = 'educationLevel') +
+  ease_aes("linear")
+```
+:::
+
+#### Interest Group
+
+::: panel-tabset
+## Financial Health
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Financial_Health, 
+           y = interestGroup)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Financial_Health', 
+       y = 'interestGroup') +
+  ease_aes("linear")
+```
+
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Wage, 
+           y = interestGroup)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Wage', 
+       y = 'interestGroup') +
+  ease_aes("linear")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggplot(all_agg_data, 
+       aes(x = Expenses, 
+           y = interestGroup)) +
+  geom_density_ridges(scale = 2, rel_min_height = 0.01) + 
+  transition_states(month_year) + 
+  labs(title = 'Year: {closest_state}', 
+       x = 'Expenses', 
+       y = 'interestGroup') +
+  ease_aes("linear")
+```
+:::
+
+## 3.4 Visualization of Daily Financial Data for March 2022
+
+Since none of the demographic groups saw any different pattern for March 2022 (i.e. financial data for March 2022 is consistently different for all demographic groups), the daily data for that particular month was further explored. From the uncertainty plot, it was found that the median wage distributed on 1 March 2022 was exceptionally higher than all other days. This may have been due to unique payouts such as yearly salary bonuses that were given out to all workers on the same day.
+
+```{r}
+#| code-fold: TRUE
+Fin_cleaned_Mar <- Fin_cleaned %>%
+  filter(month_year==as.yearmon("Mar 2022")) %>%
+  mutate(timestamp, date=as.Date(timestamp)) %>%
+  group_by(participantId, date, category) %>%
+  summarize(value_sum = sum(amount)) %>%
+  pivot_wider(names_from = c(category), values_from = value_sum)
+Fin_cleaned_Mar[is.na(Fin_cleaned_Mar)] <- 0
+
+ggplot(
+  data=Fin_cleaned_Mar,
+  aes(x=date, y=Wage)) +
+  stat_pointinterval(
+    aes(interval_color = stat(level)),
+    .width = c(0.95, 0.99),
+    .point = median,
+    .interval = qi,
+    point_color = "darkred",
+    show.legend = FALSE) +
+
+#Defining the color of the intervals 
+  scale_color_manual(
+    values = c("blue2", "darkblue"),
+    aesthetics = "interval_color")
+```
+
+# 4. Confirmatory Visual Analytics
+
+## 4.1 Differences in Financial Data across Months - March 2022 was a good month!
+
+While it was found that a large payout was distributed on 1 Mar 2022, the differences between the month of March with other months were further investigated to confirm that it is indeed statistically significant.
+
+### 4.1.1 Normality Assumption Check
+
+From the results below, the financial data did not seem to follow a normal distribution in all months at a 95% confidence level. Hence, the pairwise non-parametric tests were carried out.
+
+::: panel-tabset
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ad_t <- list()
+x=1
+for (i in unique(all_agg_data$month_year)){
+  subdf <- subset(x=all_agg_data, subset = month_year == as.yearmon(i))
+  ad_t[[x]] <- ad.test(subdf$Wage)
+  x <- x+1
+}
+
+ad_t_table <- tibble(month_year = as.character(unique(all_agg_data$month_year)),
+                        p_value = unlist(lapply(ad_t, `[[`, 2)))
+
+DT::datatable(ad_t_table, class= "compact")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ad_t <- list()
+x=1
+for (i in unique(all_agg_data$month_year)){
+  subdf <- subset(x=all_agg_data, subset = month_year == as.yearmon(i))
+  ad_t[[x]] <- ad.test(subdf$Expenses)
+  x <- x+1
+}
+
+ad_t_table <- tibble(month_year = as.character(unique(all_agg_data$month_year)),
+                        p_value = unlist(lapply(ad_t, `[[`, 2)))
+
+DT::datatable(ad_t_table, class= "compact")
+```
+
+## Recreation
+
+```{r}
+#| code-fold: TRUE
+ad_t <- list()
+x=1
+for (i in unique(all_agg_data$month_year)){
+  subdf <- subset(x=all_agg_data, subset = month_year == as.yearmon(i))
+  ad_t[[x]] <- ad.test(subdf$Recreation)
+  x <- x+1
+}
+
+ad_t_table <- tibble(month_year = as.character(unique(all_agg_data$month_year)),
+                        p_value = unlist(lapply(ad_t, `[[`, 2)))
+
+DT::datatable(ad_t_table, class= "compact")
+```
+:::
+
+### 4.1.2 Dunn Pairwise Test
+
+From the tests results, March 2022 shows significant differences in wage, expenses and recreation spending. While it is understandable that wages in March would be significantly different, expenses and recreation spending also saw increases. This can be explained by various reasons such as celebrating a large payout, good harvest, etc.
+
+::: callout-note
+Only bars with non-significant test results were plotted, i.e. no bars were found from March 2022 since its data was significantly different from all other months.
+:::
+
+::: panel-tabset
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ggbetweenstats(
+  data = all_agg_data,
+  x = month_year, 
+  y = Wage,
+  type = "np",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "ns",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggbetweenstats(
+  data = all_agg_data,
+  x = month_year, 
+  y = Expenses,
+  type = "np",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "ns",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
+
+## Recreation
+
+```{r}
+#| code-fold: TRUE
+ggbetweenstats(
+  data = all_agg_data,
+  x = month_year, 
+  y = Recreation,
+  type = "np",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "ns",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
+:::
+
+## 4.2 Differences in Financial Health across Joviality Groups
+
+### 4.2.1 Normality Assumption Check
+
+From the results below, the financial health data did not seem to follow a normal distribution in all groups at a 95% confidence level. Hence, the pairwise non-parametric tests were carried out.
+
+```{r}
+#| code-fold: TRUE
+ad_t <- list()
+x=1
+for (i in unique(all_agg_data$joviality_group)){
+  subdf <- subset(x=all_agg_data, subset = joviality_group == i)
+  ad_t[[x]] <- ad.test(subdf$Financial_Health)
+  x <- x+1
+}
+
+ad_t_table <- tibble(joviality_group = as.character(unique(all_agg_data$joviality_group)),
+                        p_value = unlist(lapply(ad_t, `[[`, 2)))
+
+DT::datatable(ad_t_table, class= "compact")
+```
+
+### 4.2.2 Dunn Pairwise Test - Spending more money correlates to being happy???
+
+From the tests results, higher joviality groups do tend to have lower financial health.
+
+::: callout-note
+Only bars with non-significant test results were plotted, i.e. most groups were found to be significantly different from all other groups other than the top 3 and bottom 2 joviality groups.
+:::
+
+```{r}
+#| code-fold: TRUE
+ggbetweenstats(
+  data = all_agg_data,
+  x = joviality_group, 
+  y = Financial_Health,
+  type = "np",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "ns",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
+
+## 4.3 Differences in Financial Health across Education Levels
+
+### 4.3.1 Normality Assumption Check
+
+From the results below, the financial health data did not seem to follow a normal distribution in all groups at a 95% confidence level. Hence, the pairwise non-parametric tests were carried out.
+
+```{r}
+#| code-fold: TRUE
+ad_t <- list()
+x=1
+for (i in unique(all_agg_data$educationLevel)){
+  subdf <- subset(x=all_agg_data, subset = educationLevel == i)
+  ad_t[[x]] <- ad.test(subdf$Financial_Health)
+  x <- x+1
+}
+
+ad_t_table <- tibble(educationLevel = as.character(unique(all_agg_data$educationLevel)),
+                        p_value = unlist(lapply(ad_t, `[[`, 2)))
+
+DT::datatable(ad_t_table, class= "compact")
+```
+
+### 4.3.2 Dunn Pairwise Test - Higher education level correlates to better financial health!
+
+From the tests results, higher education level groups do tend to have higher financial health. This may be correlated to higher financial literacy and career opportunities.
+
+::: callout-note
+Only bars with non-significant test results were plotted, i.e. all groups were found to be significantly different from all other groups.
+:::
+
+```{r}
+#| code-fold: TRUE
+ggbetweenstats(
+  data = all_agg_data,
+  x = educationLevel, 
+  y = Financial_Health,
+  type = "np",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "ns",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
+
+## 4.4 Correlation with Financial Health
+
+Following from section 3.1, the correlation plots below confirms that wage is indeed strongly correlated to financial health
+
+::: panel-tabset
+## Wage
+
+```{r}
+#| code-fold: TRUE
+ggscatterstats(
+ data = all_agg_data,
+ x = Wage,
+ y = Financial_Health,
+ marginal = FALSE) +
+  theme_minimal() +
+  labs(title = 'Correlation of Financial Health and Wage', x = "Wage", y = "Financial Health")
+```
+
+## Expenses
+
+```{r}
+#| code-fold: TRUE
+ggscatterstats(
+ data = all_agg_data,
+ x = Expenses,
+ y = Financial_Health,
+ marginal = FALSE) +
+  theme_minimal() +
+  labs(title = 'Correlation of Financial Health and Expenses', x = "Expenses", y = "Financial Health")
+```
+
+## Recreation
+
+```{r}
+#| code-fold: TRUE
+ggscatterstats(
+ data = all_agg_data,
+ x = Recreation,
+ y = Financial_Health,
+ marginal = FALSE) +
+  theme_minimal() +
+  labs(title = 'Correlation of Financial Health and Recreation', x = "Recreation", y = "Financial Health")
+```
+:::
