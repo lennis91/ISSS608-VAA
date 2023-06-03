@@ -23,10 +23,7 @@ exam <- read_csv("data/Exam_data.csv", show_col_types = FALSE)
 
 # Visualizing Uncertainty of Point Estimates with ggplot2
 
-The code chunk below performs the followings:
-a) group the observation by RACE,
-b) computes the count of observations, mean, standard deviation and standard error of Maths by RACE, and
-c) save the output as a tibble data table called my_sum.
+The code chunk below performs the followings: a) group the observation by RACE, b) computes the count of observations, mean, standard deviation and standard error of Maths by RACE, and c) save the output as a tibble data table called my_sum.
 
 ```{r}
 my_sum <- exam %>%
