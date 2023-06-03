@@ -1,0 +1,59 @@
+---
+title: "Take-home_Ex03"
+author: "Lennis"
+date: "3 Jun 2023"
+date-modified: "`r Sys.Date()`"
+edit: visual
+execute: 
+  warning: false
+  echo: true
+  eval: true
+---
+
+# Exploring Vast Challenge Data
+
+## Install and launching R packages
+
+The code chunk below uses p_load() of pacman package to check if the relevant packages are installed in the computer. If they are, then they will be launched into R.
+
+```{r}
+pacman::p_load(jsonlite, tidygraph, ggraph, visNetwork, tidyverse, tidytext, ggforce, visNetwork, graphlayouts)
+```
+
+```{r}
+MC3 <- fromJSON("data/MC3.json")
+```
+
+```{r}
+MC3_edges <- as_tibble(MC3$links) %>%
+  distinct() %>%
+  mutate(source = as.character(source),
+         target = as.character(target),
+         type = as.character(type)) %>%
+  group_by(source, target, type) %>%
+  summarise(weights = n()) %>%
+  filter(source!=target) %>%
+  ungroup()
+```
+
+```{r}
+MC3_nodes <- as_tibble(MC3$nodes) %>%
+  #distinct() %>%
+  mutate(country = as.character(country),
+         id = as.character(id),
+         product_services = as.character(product_services),
+         revenue_omu = as.numeric(as.character(revenue_omu)),
+         type = as.character(type)) %>%
+  select(id, country, type, revenue_omu, product_services)
+```
+
+```{r}
+tidy_nodes <- MC3_nodes %>%
+  unnest_tokens(word, product_services, to_lower = TRUE, strip_punct = TRUE)
+```
+
+```{r}
+tidy_stopwords <- tidy_nodes %>%
+  anti_join(stop_words)
+```
+

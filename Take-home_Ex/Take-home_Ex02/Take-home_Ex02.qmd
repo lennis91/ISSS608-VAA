@@ -1,0 +1,505 @@
+---
+title: "Take-home_Ex02"
+author: "Lennis"
+date: "20 May 2023"
+date-modified: "`r Sys.Date()`"
+edit: visual
+execute: 
+  warning: false
+  echo: true
+  eval: true
+---
+
+# Exploring Vast Challenge Data
+
+## Install and launching R packages
+
+The code chunk below uses p_load() of pacman package to check if the relevant packages are installed in the computer. If they are, then they will be launched into R. The packages are:
+
+-   `jsonlite`: Provides functions for working with JSON data.
+
+-   `tidygraph`: Provides tidyverse style interface for working with graph data.
+
+-   `ggraph`: Flexible and intuitive grammar of graphics approach for visualizing graphs.
+
+-   `igraph`: For working and analyzing graph data.
+
+-   `visNetwork`: For creating interactive network visualizations.
+
+-   `tidyverse`: A collection of core packages designed for data science, used extensively for data preparation and wrangling.
+
+-   `heatmaply`: For creating interactive heatmaps.
+
+```{r}
+pacman::p_load(jsonlite, tidygraph, ggraph, igraph, visNetwork, tidyverse, heatmaply)
+```
+
+## Importing the data
+
+```{r}
+MC2 <- fromJSON("data/mc2_challenge_graph.json")
+```
+
+## Preparing the graph
+
+Before creating the graph, the nodes need to be extracted from the data and saved into a tibble data frame object.
+
+```{r}
+MC2_nodes <- as_tibble(MC2$nodes) %>%
+  select(id, shpcountry, rcvcountry)
+```
+
+The edges are then extracted and saved into a tibble data frame object as well. The 'year' column is created to facilitate annual trend analysis.
+
+```{r}
+MC2_edges <- as_tibble(MC2$links) %>%
+  mutate(arrivaldate = ymd(arrivaldate)) %>%
+  mutate(year = year(arrivaldate)) %>%
+  select(source, target, arrivaldate, year, hscode, valueofgoods_omu, volumeteu, weightkg, valueofgoodsusd) %>%
+  distinct()
+```
+
+### Preparing the edges data
+
+As the objective of the exercise is to investigate illegal fishing activities, the appropriate records should be filtered according to the Harmonized System (HS) codes. Using the [HS Nomenclature 2022 edition](https://www.wcoomd.org/en/topics/nomenclature/instrument-and-tools/hs-nomenclature-2022-edition/hs-nomenclature-2022-edition.aspx) by the World Customs Organization, illegal fishing activities are likely related to HS codes starting with 03 and 16.
+
+However, from the initial data exploration, no codes starting with 03 were found. Upon further investigation of the top 10 most frequent HS codes, there were a few codes that may suggest erroneous records relating with fishing, as shown in the table below.
+
+```{r}
+#| code-fold: TRUE
+MC2_edges %>%
+  count(hscode, sort = TRUE) %>%
+  top_n(10)
+```
+
+| [HS Codes]{.underline} | [Brief Description]{.underline}                                                                    |
+|--------------------|----------------------------------------------------|
+| **306170**             | \[Not found. Likely erroneously keyed as 030462 is for [*Other Shrimps and Prawns*]{.underline}.\] |
+| 950300                 | Toys                                                                                               |
+| 870899                 | Parts for Motor Vehicles                                                                           |
+| 611020                 | Pullovers, Cardigans                                                                               |
+| 940360                 | Furniture, Wooden                                                                                  |
+| **304620**             | \[Not found. Likely erroneously keyed as 030462 is for [*Catfish Fillets Frozen*]{.underline}.\]   |
+| **160414**             | Tunas, Skipjack and Bonito, Prepared or Preserved                                                  |
+| 640299                 | Footwear                                                                                           |
+| 870323                 | Passenger Motor Vehicles                                                                           |
+| 640399                 | Footwear                                                                                           |
+
+From the above, it seems that HS codes beginning with 30 may have been missing a header "0" which would coincide with codes related to fishing. Furthermore, the HS codes beginning with 30 could not be matched with any existing codes. Hence, for the purpose of this exercise, HS codes beginning with 30, 1603 and 1604 were filtered.
+
+```{r}
+#| code-fold: TRUE
+MC2_edges_filter <- MC2_edges %>%
+  filter(str_detect(hscode, "^30|^1603|^1604"))
+```
+
+To facilitate initial analysis, we will aggregate all edges based on the source, targets, HS codes and year to find annual patterns at the company level. The edges will be weighted based on the count of shipment within that period. To prevent any insignificant shipments from cluttering the graph, only weights above 20 are considered.
+
+```{r}
+MC2_edges_aggregated_2028 <- MC2_edges_filter %>%
+  filter(year == "2028") %>%
+  group_by(source, target, hscode, year) %>%
+  summarise(weight = n()) %>%
+  filter(source != target) %>%
+  filter(weight > 20) %>%
+  ungroup()
+```
+
+### Preparing the nodes data
+
+Instead of using the nodes table from the original data, a new nodes table will be prepared using the source and target fields of the aggregated edges data table above. This is to ensure that the nodes only include all source and target values of the edges.
+
+```{r}
+id1 <- MC2_edges_aggregated_2028 %>%
+  select(source) %>%
+  rename(id = source)
+id2 <- MC2_edges_aggregated_2028 %>%
+  select(target) %>%
+  rename(id = target)
+MC2_nodes_extracted_2028 <- rbind(id1,id2) %>%
+  distinct()
+```
+
+## Creating the graph object
+
+The code chunk below will then utilise the prepared edges and nodes to create a tidy graph object.
+
+```{r}
+MC2_graph_2028 <- tbl_graph(nodes = MC2_nodes_extracted_2028,
+                       edges = MC2_edges_aggregated_2028,
+                       directed = TRUE)
+```
+
+## Computing the in- and out-degrees
+
+Since we are looking for the business relationship patterns, a straightforward indicator would be the in- and out-degrees of a directed graph. The code chunk below calculates both in- and out-degrees, weighted by number of shipments and unweighted as well.
+
+```{r}
+#| code-fold: TRUE
+in_degrees <- degree(MC2_graph_2028, mode = "in", loops = FALSE)
+out_degrees <- degree(MC2_graph_2028, mode = "out", loops = FALSE)
+combined_degrees <- (in_degrees + out_degrees)
+
+wt_in_degrees <- strength(MC2_graph_2028, mode = "in", loops = FALSE)
+wt_out_degrees <- strength(MC2_graph_2028, mode = "out", loops = FALSE)
+wt_combined_degrees <- (wt_in_degrees + wt_out_degrees)
+
+degree_table_2028 <- data.frame(node = MC2_graph_2028) %>%
+  mutate(year=2028, 
+         wt_in_degree = wt_in_degrees,
+         wt_out_degree = wt_out_degrees,
+         wt_combined = wt_combined_degrees,
+         in_degree = in_degrees,
+         out_degree = out_degrees,
+         combined = combined_degrees,
+         group = case_when(
+           in_degree != 0 & out_degree != 0 ~ "Transit",
+           in_degree != 0 & out_degree == 0 ~ "Importer",
+           in_degree == 0 & out_degree != 0 ~ "Exporter"
+         ))
+```
+
+From the degrees, we observe 3 different scenarios:
+
+1.  Some companies have a high in-degree but no out-degree. These companies can be characterized as [importers]{.underline}.
+
+2.  Other companies have a high out-degree and no in-degree. These companies can be characterized as [exporters]{.underline}.
+
+3.  A minority of the companies have both an out-degree and in-degree. We characterize them as [transit]{.underline} companies.
+
+# Visualizing the shipping network
+
+The code chunk below plots an interactive graph network based on the aggregated data for year 2028.
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2028 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2028 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2028$group,
+         size = pmin(pmax(degree_table_2028$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE
+                                     , selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting"))
+                                     )) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123) %>%
+  visEvents(select = "function(nodes) { selected_nodes <- nodes; }")
+```
+
+Several observations can be made from the visualization above.
+
+a.  The network is dominated by a few large exporters and large importers, seen from the large blue and red nodes, such as Mar del Este CJSC (importer) and Caracola del Sol Incorporated (Exporter)
+
+b.  Only a minority of transit companies (5 in year 2028) handles both imports and exports.
+
+c.  There are several small companies which only deal in pair connections. An exception would be Fresh Wharf SRL Consulting and Playa del Tesoro OJSC which deal with relatively large shipments.
+
+## Visualization for annual trends
+
+The code chunk below plots the network graph for the rest of the years from 2029 to 2034. Generally, large shipping companies tend to be operating at a relatively consistent rate. This is even so for the exceptionally large pair in point c above.
+
+```{r}
+#| code-fold: TRUE
+degree_table_all <- data.frame(year=numeric(), 
+                           wt_in_degree = numeric(),
+                           wt_out_degree = numeric(),
+                           wt_combined = numeric(),
+                           in_degree = numeric(),
+                           out_degree = numeric(),
+                           combined = numeric(),
+                           group = character())
+for (y in sort(unique(MC2_edges_filter$year))) {
+  temp_edges_aggregated <- MC2_edges_filter %>%
+  filter(year == y) %>%
+  group_by(source, target, hscode, year) %>%
+  summarise(weight = n()) %>%
+  filter(source != target) %>%
+  filter(weight > 20) %>%
+  ungroup()
+  
+  id1 <- temp_edges_aggregated %>%
+    select(source) %>%
+    rename(id = source)
+  id2 <- temp_edges_aggregated %>%
+    select(target) %>%
+    rename(id = target)
+  temp_nodes_extracted <- rbind(id1,id2) %>%
+    distinct()
+  
+  temp_graph <- tbl_graph(nodes = temp_nodes_extracted,
+                       edges = temp_edges_aggregated,
+                       directed = TRUE)
+  
+  in_degrees <- degree(temp_graph, mode = "in", loops = FALSE)
+  out_degrees <- degree(temp_graph, mode = "out", loops = FALSE)
+  combined_degrees <- (in_degrees + out_degrees)
+
+  wt_in_degrees <- strength(temp_graph, mode = "in", loops = FALSE)
+  wt_out_degrees <- strength(temp_graph, mode = "out", loops = FALSE)
+  wt_combined_degrees <- (wt_in_degrees + wt_out_degrees)
+  
+  temp <- data.frame(node = temp_graph) %>%
+    mutate(year=y, 
+           wt_in_degree = wt_in_degrees,
+           wt_out_degree = wt_out_degrees,
+           wt_combined = wt_combined_degrees,
+           in_degree = in_degrees,
+           out_degree = out_degrees,
+           combined = combined_degrees,
+           group = case_when(
+           in_degree != 0 & out_degree != 0 ~ "Transit",
+           in_degree != 0 & out_degree == 0 ~ "Importer",
+           in_degree == 0 & out_degree != 0 ~ "Exporter")
+           )
+  
+  variable_name <- paste("degree_table", y, sep = "_")
+  assign(variable_name, temp)
+  
+  variable_name <- paste("MC2_graph", y, sep = "_")
+  assign(variable_name, temp_graph)
+  
+  degree_table_all <- rbind(degree_table_all, temp)
+  rm(temp)
+  rm(temp_graph)
+}
+```
+
+::: panel-tabset
+## 2029
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2029 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2029 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2029$group,
+         size = pmin(pmax(degree_table_2029$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+
+## 2030
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2030 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2030 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2030$group,
+         size = pmin(pmax(degree_table_2030$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+
+## 2031
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2031 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2031 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2031$group,
+         size = pmin(pmax(degree_table_2031$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+
+## 2032
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2032 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2032 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2032$group,
+         size = pmin(pmax(degree_table_2032$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+
+## 2033
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2033 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2033 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2033$group,
+         size = pmin(pmax(degree_table_2033$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+
+## 2034
+
+```{r}
+#| code-fold: TRUE
+edges_df <- MC2_graph_2034 %>%
+  activate(edges) %>%
+  as.tibble()
+
+nodes_df <- MC2_graph_2034 %>%
+  activate(nodes) %>%
+  as.tibble() %>%
+  rename(label = id) %>%
+  mutate(id=row_number(),
+         group = degree_table_2034$group,
+         size = pmin(pmax(degree_table_2034$wt_combined / 20, 15), 50)) %>%
+  select(id, label, group, size)
+
+visNetwork(nodes_df,
+           edges_df) %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visEdges(selectionWidth = 10, 
+           arrows = "to", 
+           smooth = list(enabled = TRUE, 
+                         type = "curvedCW")) %>%
+  visOptions(highlightNearest = TRUE,
+             nodesIdSelection = list(enabled = TRUE, selected = as.character(which(nodes_df$label == "Fresh Wharf SRL Consulting")))) %>%
+  visLegend() %>%
+  visLayout(randomSeed = 123)
+```
+:::
+
+```{r}
+#| code-fold: TRUE
+degree_table_all %>% group_by(id, year)
+```
+
+# Visualizing companies with low activities
+
+From the degree computation, another key observation was the presence of companies that only have 1 operating year in the 7-year period. The code chunk below plots an interactive heat map, visualizing the gaps of operations for some companies.
+
+```{r}
+#| code-fold: TRUE
+degree_table_pivot <- degree_table_all %>%
+  select(id, year, wt_combined) %>%
+  pivot_wider(names_from = year, values_from = wt_combined) %>%
+  rename_with(~ paste0("Y", .x), starts_with("20")) %>%
+  mutate_all(~replace_na(.,0)) %>% 
+  filter(rowSums(. == 0) >= 6)
+
+degree_matrix <- degree_table_pivot %>%
+  remove_rownames %>% 
+  column_to_rownames(var="id") %>%
+  data.matrix()
+```
+
+```{r}
+#| code-fold: TRUE
+heatmaply(degree_matrix,
+          Colv=NA,
+          Rowv = NA,
+          seriate = "none",
+          colors = Blues,
+          k_row = 7,
+          margins = c(NA,200,60,NA),
+          fontsize_row = 4,
+          fontsize_col = 5,
+          xlab = "Year",
+          ylab = "Nodes"
+          )
+```
+
+It is possible that these companies may be the ones that were caught illegally, shut down but subsequently start up again under another name, as suggested by FishEye. Further investigation is needed to build up a more complete data from the link suggestions before a conclusion can be drawn.
