@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .Rdata
+.RdataTmp
 .httr-oauth
 .DS_Store
 
