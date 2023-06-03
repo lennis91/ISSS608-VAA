@@ -73,7 +73,7 @@ MC2_edges %>%
 ```
 
 | [HS Codes]{.underline} | [Brief Description]{.underline}                                                                    |
-|--------------------|----------------------------------------------------|
+|------------------------|----------------------------------------------------------------------------------------------------|
 | **306170**             | \[Not found. Likely erroneously keyed as 030462 is for [*Other Shrimps and Prawns*]{.underline}.\] |
 | 950300                 | Toys                                                                                               |
 | 870899                 | Parts for Motor Vehicles                                                                           |
